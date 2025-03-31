@@ -14,14 +14,7 @@ struct TOKEN {
 
 D [0-9]
 L ([a-zA-Z]|[_])
-
-/* recuperar mais informações:
-num_chars += yyleng; num_column += yyleng;printf("%s, %d, %d, %d\n", yytext, INT, num_lines, num_column);
-*/
-
-/* não entendi a parte "sem _":
-é isso? {[_]L{L|D|[_]}*}{LD}+
-*/
+L2 ([a-zA-Z])
 
 %%
 "program"   { printf("PROGRAM %s\n", yytext); }
@@ -70,8 +63,9 @@ num_chars += yyleng; num_column += yyleng;printf("%s, %d, %d, %d\n", yytext, INT
 "to"        { printf("TO %s\n", yytext); }
 "step"      { printf("STEP %s\n", yytext); }
 "until"     { printf("UNTIL %s\n", yytext); }
+"//".*      {}
 {D}+                                        {printf("INT %s\n", yytext);}
-{L}({L}|{D})*                               {printf("ID %s\n", yytext);}
+({L}({L}|{D})*{L2})|{L2}                    {printf("ID %s\n", yytext);}
 ({D}+[.]{D}+)|({D}+[.]{D}+)(e([+]|-){D}{D}) {printf("FLOAT %s\n", yytext);}
 ["].*["]                                    {printf("STRING %s\n", yytext);}
 \n    ++num_lines; ++num_chars; num_column = 0;
@@ -84,6 +78,12 @@ int main() {
             num_lines, num_chars );
 }
 
-/* posicao no codigo (linha e coluna, tipo de token, valor do token)
- {struct TOKEN tk;tk.tokenType=INT;tk.column=num_column;tk.row=num_lines;return tk;}
- */
+
+
+/* recuperar mais informações:
+num_chars += yyleng; num_column += yyleng;printf("%s, %d, %d, %d\n", yytext, INT, num_lines, num_column);]
+
+posicao no codigo (linha e coluna, tipo de token, valor do token)
+{struct TOKEN tk;tk.tokenType=INT;tk.column=num_column;tk.row=num_lines;return tk;}
+
+*/
