@@ -2,14 +2,16 @@
 
 #include <string>
 #include <variant>
-enum class TokenType {
-	// simple types
-	Int,
+#include <iostream>
+
+enum class Token {
+	// simples
+	Int = 0,
 	Float,
 	Bool,
 	String,
 
-	// declarations (program, var, procedures and types)
+	// declarations (program, var, procedures ands)
 	Program,
 	Begin,
 	In,
@@ -37,10 +39,10 @@ enum class TokenType {
 	Comparison,
 
 	// Literals
-	IntL,
-	FloatL,
-	BoolL,
-	StringL,
+	Int_L,
+	Float_L,
+	Bool_L,
+	String_L,
 	Null,
 
 	// control-flow
@@ -61,17 +63,20 @@ enum class TokenType {
 	Semicolon,
 	Colon,
 	Assign,
-	LParen,
-	RParen,
-	LBracket,
-	RBracket,
+	L_Paren,
+	R_Paren,
+	L_Bracket,
+	R_Bracket,
 	Dot,
 
 	// most generic, the identifier
-	Identifier
+	Identifier,
+
+	// end of file
+	TEOF
 };
 
-enum ComparisonType {
+enum cmp_type {
 	Leq,
 	Geq,
 	Greater,
@@ -80,62 +85,83 @@ enum ComparisonType {
 	Neq
 };
 
-using ComparisonData = ComparisonType;
-using IntLiteralData = int;
-using FloatLiteralData = float;
-using StringLiteralData = std::string;
-using BoolLiteralData = bool;
-
 using TokenData = std::variant<
-	std::monostate,
-	ComparisonData,
-	IntLiteralData,
-	FloatLiteralData,
-	StringLiteralData,
-	BoolLiteralData
+	std::monostate, // nothing
+	int,		// integers
+	float,		// floats
+	std::string,	// strings and identifiers
+	bool,		// booleans
+	cmp_type	// comparison
 >;
 
-// use std::variant
-class Token {
-public:
-	Token(TokenType type, std::string lexeme, size_t line, size_t column)
-		: type(type),
-		  lexeme(lexeme),
-		  line(line),
-		  column(column),
-		  data(std::monostate())
-	{}
-
-	TokenType type;
-	TokenData data;
-	std::string lexeme;
-	size_t line;
-	size_t column;
-
-	// set token data carrier
-	// one for each possible type
-	void set_token_data(int value) {
-		this->data = IntLiteralData(value);
-	}
-	
-	void set_token_data(float value) {
-		this->data = FloatLiteralData(value);
+// overload the << operator for cmp_type
+inline std::ostream& operator<<(std::ostream& os, const cmp_type& cmp) {
+	switch (cmp) {
+		case cmp_type::Leq: os << "<="; break;
+		case cmp_type::Geq: os << ">="; break;
+		case cmp_type::Greater: os << ">"; break;
+		case cmp_type::Less: os << "<"; break;
+		case cmp_type::Eq: os << "="; break;
+		case cmp_type::Neq: os << "<>"; break;
 	}
 
-	void set_token_data(bool value) {
-		this->data = BoolLiteralData(value);
+	return os;
+}
+
+// overload the << operator for Token
+inline std::ostream& operator<<(std::ostream& os, const Token& token) {
+	switch (token) {
+		case Token::Int:	os << "int"; break;
+		case Token::Float:	os << "float"; break;
+		case Token::Bool:	os << "bool"; break;
+		case Token::String:	os << "string"; break;
+		case Token::Program:	os << "program"; break;
+		case Token::Begin:	os << "begin"; break;
+		case Token::In:		os << "in"; break;
+		case Token::End:	os << "end"; break;
+		case Token::Var:	os << "var"; break;
+		case Token::Procedure:  os << "procedure"; break;
+		case Token::Struct:	os << "struct"; break;
+		case Token::New:	os << "new"; break;
+		case Token::Ref:	os << "ref"; break;
+		case Token::Deref:	os << "deref"; break;
+		case Token::Plus:	os << "+"; break;
+		case Token::Minus:	os << "-"; break;
+		case Token::Times:	os << "*"; break;
+		case Token::Divides:	os << "divides"; break;
+		case Token::Pow:	os << "^"; break;
+		case Token::Modulo:	os << "%"; break;
+		case Token::And:	os << "&&"; break;
+		case Token::Or:		os << "||"; break;
+		case Token::Comparison: os << "comparison"; break;
+		case Token::Int_L:	os << "int literal"; break;
+		case Token::Float_L:	os << "float literal"; break;
+		case Token::Bool_L:	os << "bool literal"; break;
+		case Token::String_L:	os << "string literal"; break;
+		case Token::Null:	os << "null"; break;
+		case Token::If:		os << "if"; break;
+		case Token::Then:	os << "then"; break;
+		case Token::Else:	os << "else"; break;
+		case Token::Fi:		os << "fi"; break;
+		case Token::While:	os << "while"; break;
+		case Token::Do:		os << "do"; break;
+		case Token::Until:	os << "until"; break;
+		case Token::Od:		os << "od"; break;
+		case Token::For:	os << "for"; break;
+		case Token::To:		os << "to"; break;
+		case Token::Step:	os << "step"; break;
+		case Token::Return:	os << "return"; break;
+		case Token::Semicolon:	os << ";"; break;
+		case Token::Colon:	os << ":"; break;
+		case Token::Assign:	os << ":="; break;
+		case Token::L_Paren:	os << "("; break;
+		case Token::R_Paren:	os << ")"; break;
+		case Token::L_Bracket:	os << "{"; break;
+		case Token::R_Bracket:	os << "}"; break;
+		case Token::Dot:	os << "."; break;
+		case Token::Identifier: os << "id"; break;
+		case Token::TEOF:	os << "EOF"; break;
 	}
 
-	void set_token_data(std::string str) {
-		this->data = StringLiteralData(str); 
-	}
-
-	void set_token_data(ComparisonType op) {
-		this->data = ComparisonData(op);
-	}
-
-
-	std::string to_string() {
-		return this->lexeme;
-	}
-};
+	return os;
+}

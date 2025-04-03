@@ -1,9 +1,9 @@
-#include <string>
-class Lexer {
-public:
-	Lexer(const std::string& source);
-	void getNextToken();
-private:
-	std::string source;
-	size_t pos;
-};
+#ifndef LEXER_HPP
+#define LEXER_HPP
+
+#include "tokens.hpp"
+
+extern TokenData yylval;
+extern int yylex(void);
+
+#endif
