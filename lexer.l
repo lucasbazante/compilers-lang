@@ -8,6 +8,7 @@
 	#define YYSTYPE_IS_DECLARED 1
 
 	YYSTYPE yylval;
+	SymbolTable sb;
 
 	int curr_line = 1;
 	int curr_column = 1;
@@ -85,7 +86,7 @@ return { yylval = std::monostate{}; return (int)Token::Return; }
 true|false		    { yylval = yytext == "true" ? true : false; return (int)Token::Bool_L; }
 null			    { yylval = std::monostate{}; return (int)Token::Null; }
 
-{L}({L_}|{D})* { yylval = yytext; return (int)Token::Identifier; }
+{L}({L_}|{D})* { yylval = yytext; sb.insert_symbol(yytext, Token::Identifier);return (int)Token::Identifier; }
 
 \n        { curr_line++; curr_column = 1; }
 .	  { curr_column++; }

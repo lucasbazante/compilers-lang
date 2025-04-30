@@ -29,6 +29,10 @@ int main() {
 			}
 		}, yylval);
 
+		if (token == (int)Token::Identifier) {
+			std::cout << '\n' << sb;
+		}
+
 		std::cout << std::endl;
 	}
 
