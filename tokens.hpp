@@ -68,6 +68,7 @@ enum class Token {
 	L_Bracket,
 	R_Bracket,
 	Dot,
+	Comma,
 
 	// most generic, the identifier
 	Identifier,
