@@ -79,6 +79,7 @@ return { yylval = std::monostate{}; return (int)Token::Return; }
 "{"  { yylval = std::monostate{}; return (int)Token::L_Bracket; }
 "}"  { yylval = std::monostate{}; return (int)Token::R_Bracket; }
 "."  { yylval = std::monostate{}; return (int)Token::Dot; }
+","  { yyval  = std::monostate{}; return (int)Token::Comma; }
 
 {D}+			    { yylval = std::stoi(yytext); return (int)Token::Int_L; }
 ({D}+"."{D}+)(e[+-]{D}{D})? { yylval = std::stof(yytext); return (int)Token::Float_L; }
