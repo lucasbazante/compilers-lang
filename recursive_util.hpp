@@ -385,7 +385,7 @@ std::string rule_to_string(Rule rule) {
 	std::string s;
 
 	for (Symbol symbol : rule.rhs) {
-		s += is_terminal(symbol) ? symbol_to_string.at(symbol) : "<" + std::to_string((int)symbol) + ">";
+		s += is_terminal(symbol) ? symbol_to_string.at(symbol) : "~" + std::to_string((int)symbol) + "~";
 		s += " ";
 	}
 

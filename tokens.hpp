@@ -68,6 +68,7 @@ enum class Token {
 	L_Bracket,
 	R_Bracket,
 	Dot,
+	Comma,
 
 	// most generic, the identifier
 	Identifier,
@@ -159,6 +160,7 @@ inline std::ostream& operator<<(std::ostream& os, const Token& token) {
 		case Token::L_Bracket:	os << "{"; break;
 		case Token::R_Bracket:	os << "}"; break;
 		case Token::Dot:	os << "."; break;
+		case Token::Comma:	os << ","; break;
 		case Token::Identifier: os << "name"; break;
 		case Token::TEOF:	os << "EOF"; break;
 	}
