@@ -180,7 +180,7 @@ std::unordered_map<std::string, TableTokens> tokenMap = {
     {"int_literal", TableTokens::INT_literal},
     {"string_literal", TableTokens::STRING_literal},
     {"bool_literal", TableTokens::BOOL_literal},
-    {"NULL_", TableTokens::NULL_},
+    {"null", TableTokens::NULL_},
     {"if", TableTokens::IF},
     {"then", TableTokens::THEN},
     {"fi", TableTokens::FI},
