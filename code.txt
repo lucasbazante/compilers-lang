@@ -14,7 +14,7 @@ begin
         var x : int;
         var y : int;
         var xr: ref (int);
-        var yr : ref (int);
+        var yr : ref (int)
     in
         x := 42; y := 84;
         xr := ref (x); yr := ref(y);
