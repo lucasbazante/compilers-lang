@@ -74,7 +74,9 @@ enum class Token {
 	Identifier,
 
 	// end of file
-	TEOF
+	TEOF,
+
+	COUNT
 };
 
 enum cmp_type {
