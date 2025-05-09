@@ -21,6 +21,11 @@ add_executable(table_parser
     src/parser.cpp
 )
 
+add_executable(recursive_parser
+    ${FLEX_Lexer_OUTPUTS}
+    src/recursive_parser.cpp
+)
+
 # Include directory for both targets
 target_include_directories(tokenizer_test PRIVATE include)
 target_include_directories(table_parser PRIVATE include)
