@@ -10,7 +10,9 @@ int main() {
 	while ((token = yylex()) != static_cast<int>(Token::TEOF)) {
 		std::cout << "[" 
 			  << static_cast<Token>(token)
-			  << "]";
+			  << "]"
+			  << " (line: " << yylineno << ", "
+			  << "column: " << yycolumn << ")";
 		
 		std::visit([](auto&& value) {
 			using T = std::decay_t<decltype(value)>;
@@ -29,9 +31,10 @@ int main() {
 			}
 		}, yylval);
 
-		if (token == (int)Token::Identifier) {
-			std::cout << '\n' << sb;
-		}
+		// If needed, print symbol table
+		// if (token == (int)Token::Identifier) {
+		// 	std::cout << '\n' << sb;
+		// }
 
 		std::cout << std::endl;
 	}
