@@ -2,3 +2,6 @@ a.out
 lex.yy.c
 build/*
 .cache/
+errors.log
+code_samples/
+run_parser.sh

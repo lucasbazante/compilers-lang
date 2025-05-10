@@ -56,7 +56,7 @@ deref { yylval = std::monostate{}; return (int)Token::Deref; }
 
 "&&" { yylval = std::monostate{}; return (int)Token::And; }
 "||" { yylval = std::monostate{}; return (int)Token::Or; }
-"==" { yylval = cmp_type::Eq; return (int)Token::Comparison; }
+"="  { yylval = cmp_type::Eq; return (int)Token::Comparison; }
 "<>" { yylval = cmp_type::Neq; return (int)Token::Comparison; }
 "<=" { yylval = cmp_type::Leq; return (int)Token::Comparison; }
 "<"  { yylval = cmp_type::Less; return (int)Token::Comparison; }
@@ -84,11 +84,7 @@ return { yylval = std::monostate{}; return (int)Token::Return; }
 "{"  { yylval = std::monostate{}; return (int)Token::L_Bracket; }
 "}"  { yylval = std::monostate{}; return (int)Token::R_Bracket; }
 "."  { yylval = std::monostate{}; return (int)Token::Dot; }
-<<<<<<< HEAD:src/lexer.l
 ","  { yylval = std::monostate{}; return (int)Token::Comma; }
-=======
-","  { yyval  = std::monostate{}; return (int)Token::Comma; }
->>>>>>> main:lexer.l
 
 {D}+			    { yylval = std::stoi(yytext); return (int)Token::Int_L; }
 ({D}+"."{D}+)(e[+-]{D}{D})? { yylval = std::stof(yytext); return (int)Token::Float_L; }
