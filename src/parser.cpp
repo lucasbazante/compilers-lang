@@ -1,6 +1,5 @@
 #include <cstdlib>
 #include <iostream>
-#include <sstream>
 #include <iterator>
 #include <optional>
 #include <stack>
@@ -24,10 +23,13 @@ bool match(Token tk, ParseStack* stack) {
 		return true;
 	}
 
-	std::cerr << "[SYNTAX ERROR]\nExpected token "
+	std::cerr << "[SYNTAX ERROR]\nExpected token `"
 		  << tk
-		  << " but got "
-		  << curr_token << ".\n";
+		  << "` but got `"
+		  << yytext
+		  << "` at ("
+		  << yylineno << "," << yycolumn
+		  << ").\n";
 
 	return false;
 }
@@ -43,9 +45,11 @@ bool match_rule(std::optional<SymbolSequence> derivation, ParseStack* stack) {
 		return true;	
 	}
 
-	std::cerr << "[SYNTAX ERROR]\nUnexpected token "
-		  << curr_token
-		  << ".\n";
+	std::cerr << "[SYNTAX ERROR]\nUnexpected token `"
+		  << yytext
+		  << "` at ("
+		  << yylineno << "," << yycolumn
+		  << ").\n";
 
 	return false;
 }

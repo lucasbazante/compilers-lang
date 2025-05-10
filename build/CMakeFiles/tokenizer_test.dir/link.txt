@@ -1,0 +1,1 @@
+/usr/sbin/c++ -Wl,--dependency-file=CMakeFiles/tokenizer_test.dir/link.d CMakeFiles/tokenizer_test.dir/lexer.cpp.o CMakeFiles/tokenizer_test.dir/src/tokenizer_test.cpp.o -o tokenizer_test

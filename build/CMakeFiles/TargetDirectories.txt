@@ -1,0 +1,4 @@
+/home/arch/compilers-lang/build/CMakeFiles/tokenizer_test.dir
+/home/arch/compilers-lang/build/CMakeFiles/table_parser.dir
+/home/arch/compilers-lang/build/CMakeFiles/edit_cache.dir
+/home/arch/compilers-lang/build/CMakeFiles/rebuild_cache.dir

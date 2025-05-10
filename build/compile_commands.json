@@ -1,0 +1,26 @@
+[
+{
+  "directory": "/home/arch/compilers-lang/build",
+  "command": "/usr/sbin/c++  -I/home/arch/compilers-lang/include -std=gnu++17 -o CMakeFiles/tokenizer_test.dir/lexer.cpp.o -c /home/arch/compilers-lang/build/lexer.cpp",
+  "file": "/home/arch/compilers-lang/build/lexer.cpp",
+  "output": "CMakeFiles/tokenizer_test.dir/lexer.cpp.o"
+},
+{
+  "directory": "/home/arch/compilers-lang/build",
+  "command": "/usr/sbin/c++  -I/home/arch/compilers-lang/include -std=gnu++17 -o CMakeFiles/tokenizer_test.dir/src/tokenizer_test.cpp.o -c /home/arch/compilers-lang/src/tokenizer_test.cpp",
+  "file": "/home/arch/compilers-lang/src/tokenizer_test.cpp",
+  "output": "CMakeFiles/tokenizer_test.dir/src/tokenizer_test.cpp.o"
+},
+{
+  "directory": "/home/arch/compilers-lang/build",
+  "command": "/usr/sbin/c++  -I/home/arch/compilers-lang/include -std=gnu++17 -o CMakeFiles/table_parser.dir/lexer.cpp.o -c /home/arch/compilers-lang/build/lexer.cpp",
+  "file": "/home/arch/compilers-lang/build/lexer.cpp",
+  "output": "CMakeFiles/table_parser.dir/lexer.cpp.o"
+},
+{
+  "directory": "/home/arch/compilers-lang/build",
+  "command": "/usr/sbin/c++  -I/home/arch/compilers-lang/include -std=gnu++17 -o CMakeFiles/table_parser.dir/src/parser.cpp.o -c /home/arch/compilers-lang/src/parser.cpp",
+  "file": "/home/arch/compilers-lang/src/parser.cpp",
+  "output": "CMakeFiles/table_parser.dir/src/parser.cpp.o"
+}
+]

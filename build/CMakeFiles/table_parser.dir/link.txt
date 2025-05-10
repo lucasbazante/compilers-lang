@@ -1,0 +1,1 @@
+/usr/sbin/c++ -Wl,--dependency-file=CMakeFiles/table_parser.dir/link.d CMakeFiles/table_parser.dir/lexer.cpp.o CMakeFiles/table_parser.dir/src/parser.cpp.o -o table_parser

@@ -10,11 +10,16 @@
 	YYSTYPE yylval;
 	SymbolTable sb;
 
-	int curr_line = 1;
-	int curr_column = 1;
+	int yycolumn = 1,
+	    prev_col = 1;
+
+	#define YY_USER_ACTION \
+		yycolumn = prev_col; \
+		prev_col += yyleng;
 %}
 
 %option noyywrap
+%option yylineno
 
 D  [0-9]
 L  ([a-zA-Z])
@@ -22,8 +27,8 @@ L_ ([a-zA-Z]|[_])
 
 %%
 
-"//".*              { curr_line++; curr_column = 1; } 
-"(*"(.*(\n)?)*"*)"  { }
+"//".*              { yycolumn = 1; prev_col = 1; }
+"(*"(.*(\n)?)*"*)"  { yycolumn = 1; prev_col = 1; }
 
 program   { yylval = std::monostate{}; return (int)Token::Program; }
 begin     { yylval = std::monostate{}; return (int)Token::Begin; }
@@ -89,8 +94,8 @@ null			    { yylval = std::monostate{}; return (int)Token::Null; }
 
 {L}({L_}|{D})* { yylval = yytext; sb.insert_symbol(yytext, Token::Identifier); return (int)Token::Identifier; }
 
-\n        { curr_line++; curr_column = 1; }
-.	  { curr_column++; }
+\n        { yycolumn = 1; prev_col = 1; }
+.	  { }
 <<EOF>>   { return (int)Token::TEOF; }
 
 %%

@@ -4,6 +4,9 @@ project(Compiler)
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 
+# LSP Detection
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Include headers from include/
 include_directories(include)
 
