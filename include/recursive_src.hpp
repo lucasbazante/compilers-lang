@@ -22,7 +22,7 @@ Token match(std::string str_, Token current_token) {
    }
    else {
        // parar execução
-       std::cout << "info\n";
+       std::cout << "expected " << str_ << " but found " << current_token << std::endl;
        exit(1);
    }
 }
@@ -46,7 +46,7 @@ Token procedure_PARAMFIELD_DECL_OPT_PRIME(Token token);
 Token procedure_PARAMFIELD_DECL_LIST_PRIME(Token token);
 Token procedure_PARAMFIELD_DECL_LIST_OPT_PRIME(Token token);
 Token procedure_STMT_LIST(Token token);
-Token procedure_STMT_TAIL(Token token);
+Token procedure_STMT_LIST_TAIL(Token token);
 Token procedure_STMT(Token token);
 Token procedure_IF_STMT(Token token);
 Token procedure_IF_ELSE(Token token);
@@ -59,17 +59,17 @@ Token procedure_ACCESS_TAIL(Token token);
 Token procedure_MAYBE_ACCESS_TAIL(Token token);
 Token procedure_EXP(Token token);
 Token procedure_OR_EXP(Token token);
-Token procedure_OR_EXP_LIST_TAIL(Token token);
+Token procedure_OR_EXP_TAIL(Token token);
 Token procedure_AND_EXP(Token token);
-Token procedure_AND_EXP_LIST_TAIL(Token token);
+Token procedure_AND_EXP_TAIL(Token token);
 Token procedure_REL_EXP(Token token);
-Token procedure_REL_EXP_LIST_TAIL(Token token);
+Token procedure_REL_EXP_TAIL(Token token);
 Token procedure_ADD_EXP(Token token);
-Token procedure_ADD_EXP_LIST_TAIL(Token token);
+Token procedure_ADD_EXP_TAIL(Token token);
 Token procedure_MUL_EXP(Token token);
-Token procedure_MUL_EXP_LIST_TAIL(Token token);
+Token procedure_MUL_EXP_TAIL(Token token);
 Token procedure_POW_EXP(Token token);
-Token procedure_POW_EXP_LIST_TAIL(Token token);
+Token procedure_POW_EXP_TAIL(Token token);
 Token procedure_UNARY_EXP(Token token);
 Token procedure_PRIMARY(Token token);
 Token procedure_REF_VAR(Token token);
@@ -150,6 +150,9 @@ Token procedure_DECLS_LIST_OPT(Token token) {
 }
 Token procedure_PROC_DECLS_OPT(Token token) {
 	switch((int)token) {
+		case 6:
+			token = match("in", token);
+			break;
 		case 7:
 			break;
 		case 8:
@@ -420,39 +423,39 @@ Token procedure_STMT_LIST(Token token) {
 			break;
 		case 11:
 			token = procedure_STMT(token);
-			token = procedure_STMT_TAIL(token);
+			token = procedure_STMT_LIST_TAIL(token);
 			break;
 		case 12:
 			token = procedure_STMT(token);
-			token = procedure_STMT_TAIL(token);
+			token = procedure_STMT_LIST_TAIL(token);
 			break;
 		case 13:
 			token = procedure_STMT(token);
-			token = procedure_STMT_TAIL(token);
+			token = procedure_STMT_LIST_TAIL(token);
 			break;
 		case 23:
 			token = procedure_STMT(token);
-			token = procedure_STMT_TAIL(token);
+			token = procedure_STMT_LIST_TAIL(token);
 			break;
 		case 24:
 			token = procedure_STMT(token);
-			token = procedure_STMT_TAIL(token);
+			token = procedure_STMT_LIST_TAIL(token);
 			break;
 		case 25:
 			token = procedure_STMT(token);
-			token = procedure_STMT_TAIL(token);
+			token = procedure_STMT_LIST_TAIL(token);
 			break;
 		case 26:
 			token = procedure_STMT(token);
-			token = procedure_STMT_TAIL(token);
+			token = procedure_STMT_LIST_TAIL(token);
 			break;
 		case 27:
 			token = procedure_STMT(token);
-			token = procedure_STMT_TAIL(token);
+			token = procedure_STMT_LIST_TAIL(token);
 			break;
 		case 28:
 			token = procedure_STMT(token);
-			token = procedure_STMT_TAIL(token);
+			token = procedure_STMT_LIST_TAIL(token);
 			break;
 		case 30:
 			break;
@@ -460,11 +463,11 @@ Token procedure_STMT_LIST(Token token) {
 			break;
 		case 32:
 			token = procedure_STMT(token);
-			token = procedure_STMT_TAIL(token);
+			token = procedure_STMT_LIST_TAIL(token);
 			break;
 		case 33:
 			token = procedure_STMT(token);
-			token = procedure_STMT_TAIL(token);
+			token = procedure_STMT_LIST_TAIL(token);
 			break;
 		case 34:
 			break;
@@ -472,19 +475,19 @@ Token procedure_STMT_LIST(Token token) {
 			break;
 		case 36:
 			token = procedure_STMT(token);
-			token = procedure_STMT_TAIL(token);
+			token = procedure_STMT_LIST_TAIL(token);
 			break;
 		case 39:
 			token = procedure_STMT(token);
-			token = procedure_STMT_TAIL(token);
+			token = procedure_STMT_LIST_TAIL(token);
 			break;
 		case 43:
 			token = procedure_STMT(token);
-			token = procedure_STMT_TAIL(token);
+			token = procedure_STMT_LIST_TAIL(token);
 			break;
 		case 49:
 			token = procedure_STMT(token);
-			token = procedure_STMT_TAIL(token);
+			token = procedure_STMT_LIST_TAIL(token);
 			break;
 		default:
 			std::cout << "[SYNTAX ERROR] No rule found for STMT_LIST rule with token " << token;
@@ -492,7 +495,7 @@ Token procedure_STMT_LIST(Token token) {
 	}
 	return token;
 }
-Token procedure_STMT_TAIL(Token token) {
+Token procedure_STMT_LIST_TAIL(Token token) {
 	switch((int)token) {
 		case 7:
 			break;
@@ -509,7 +512,7 @@ Token procedure_STMT_TAIL(Token token) {
 			token = procedure_STMT_LIST(token);
 			break;
 		default:
-			std::cout << "[SYNTAX ERROR] No rule found for STMT_TAIL rule with token " << token;
+			std::cout << "[SYNTAX ERROR] No rule found for STMT_LIST_TAIL rule with token " << token;
 			exit(1);
 	}
 	return token;
@@ -864,47 +867,47 @@ Token procedure_OR_EXP(Token token) {
 	switch((int)token) {
 		case 11:
 			token = procedure_AND_EXP(token);
-			token = procedure_OR_EXP_LIST_TAIL(token);
+			token = procedure_OR_EXP_TAIL(token);
 			break;
 		case 12:
 			token = procedure_AND_EXP(token);
-			token = procedure_OR_EXP_LIST_TAIL(token);
+			token = procedure_OR_EXP_TAIL(token);
 			break;
 		case 13:
 			token = procedure_AND_EXP(token);
-			token = procedure_OR_EXP_LIST_TAIL(token);
+			token = procedure_OR_EXP_TAIL(token);
 			break;
 		case 22:
 			token = procedure_AND_EXP(token);
-			token = procedure_OR_EXP_LIST_TAIL(token);
+			token = procedure_OR_EXP_TAIL(token);
 			break;
 		case 23:
 			token = procedure_AND_EXP(token);
-			token = procedure_OR_EXP_LIST_TAIL(token);
+			token = procedure_OR_EXP_TAIL(token);
 			break;
 		case 24:
 			token = procedure_AND_EXP(token);
-			token = procedure_OR_EXP_LIST_TAIL(token);
+			token = procedure_OR_EXP_TAIL(token);
 			break;
 		case 25:
 			token = procedure_AND_EXP(token);
-			token = procedure_OR_EXP_LIST_TAIL(token);
+			token = procedure_OR_EXP_TAIL(token);
 			break;
 		case 26:
 			token = procedure_AND_EXP(token);
-			token = procedure_OR_EXP_LIST_TAIL(token);
+			token = procedure_OR_EXP_TAIL(token);
 			break;
 		case 27:
 			token = procedure_AND_EXP(token);
-			token = procedure_OR_EXP_LIST_TAIL(token);
+			token = procedure_OR_EXP_TAIL(token);
 			break;
 		case 43:
 			token = procedure_AND_EXP(token);
-			token = procedure_OR_EXP_LIST_TAIL(token);
+			token = procedure_OR_EXP_TAIL(token);
 			break;
 		case 49:
 			token = procedure_AND_EXP(token);
-			token = procedure_OR_EXP_LIST_TAIL(token);
+			token = procedure_OR_EXP_TAIL(token);
 			break;
 		default:
 			std::cout << "[SYNTAX ERROR] No rule found for OR_EXP rule with token " << token;
@@ -912,7 +915,7 @@ Token procedure_OR_EXP(Token token) {
 	}
 	return token;
 }
-Token procedure_OR_EXP_LIST_TAIL(Token token) {
+Token procedure_OR_EXP_TAIL(Token token) {
 	switch((int)token) {
 		case 6:
 			break;
@@ -921,7 +924,7 @@ Token procedure_OR_EXP_LIST_TAIL(Token token) {
 		case 21:
 			token = match("||", token);
 			token = procedure_AND_EXP(token);
-			token = procedure_OR_EXP_LIST_TAIL(token);
+			token = procedure_OR_EXP_TAIL(token);
 			break;
 		case 29:
 			break;
@@ -946,7 +949,7 @@ Token procedure_OR_EXP_LIST_TAIL(Token token) {
 		case 48:
 			break;
 		default:
-			std::cout << "[SYNTAX ERROR] No rule found for OR_EXP_LIST_TAIL rule with token " << token;
+			std::cout << "[SYNTAX ERROR] No rule found for OR_EXP_TAIL rule with token " << token;
 			exit(1);
 	}
 	return token;
@@ -955,47 +958,47 @@ Token procedure_AND_EXP(Token token) {
 	switch((int)token) {
 		case 11:
 			token = procedure_REL_EXP(token);
-			token = procedure_AND_EXP_LIST_TAIL(token);
+			token = procedure_AND_EXP_TAIL(token);
 			break;
 		case 12:
 			token = procedure_REL_EXP(token);
-			token = procedure_AND_EXP_LIST_TAIL(token);
+			token = procedure_AND_EXP_TAIL(token);
 			break;
 		case 13:
 			token = procedure_REL_EXP(token);
-			token = procedure_AND_EXP_LIST_TAIL(token);
+			token = procedure_AND_EXP_TAIL(token);
 			break;
 		case 22:
 			token = procedure_REL_EXP(token);
-			token = procedure_AND_EXP_LIST_TAIL(token);
+			token = procedure_AND_EXP_TAIL(token);
 			break;
 		case 23:
 			token = procedure_REL_EXP(token);
-			token = procedure_AND_EXP_LIST_TAIL(token);
+			token = procedure_AND_EXP_TAIL(token);
 			break;
 		case 24:
 			token = procedure_REL_EXP(token);
-			token = procedure_AND_EXP_LIST_TAIL(token);
+			token = procedure_AND_EXP_TAIL(token);
 			break;
 		case 25:
 			token = procedure_REL_EXP(token);
-			token = procedure_AND_EXP_LIST_TAIL(token);
+			token = procedure_AND_EXP_TAIL(token);
 			break;
 		case 26:
 			token = procedure_REL_EXP(token);
-			token = procedure_AND_EXP_LIST_TAIL(token);
+			token = procedure_AND_EXP_TAIL(token);
 			break;
 		case 27:
 			token = procedure_REL_EXP(token);
-			token = procedure_AND_EXP_LIST_TAIL(token);
+			token = procedure_AND_EXP_TAIL(token);
 			break;
 		case 43:
 			token = procedure_REL_EXP(token);
-			token = procedure_AND_EXP_LIST_TAIL(token);
+			token = procedure_AND_EXP_TAIL(token);
 			break;
 		case 49:
 			token = procedure_REL_EXP(token);
-			token = procedure_AND_EXP_LIST_TAIL(token);
+			token = procedure_AND_EXP_TAIL(token);
 			break;
 		default:
 			std::cout << "[SYNTAX ERROR] No rule found for AND_EXP rule with token " << token;
@@ -1003,7 +1006,7 @@ Token procedure_AND_EXP(Token token) {
 	}
 	return token;
 }
-Token procedure_AND_EXP_LIST_TAIL(Token token) {
+Token procedure_AND_EXP_TAIL(Token token) {
 	switch((int)token) {
 		case 6:
 			break;
@@ -1012,7 +1015,7 @@ Token procedure_AND_EXP_LIST_TAIL(Token token) {
 		case 20:
 			token = match("&&", token);
 			token = procedure_REL_EXP(token);
-			token = procedure_AND_EXP_LIST_TAIL(token);
+			token = procedure_AND_EXP_TAIL(token);
 			break;
 		case 21:
 			break;
@@ -1039,7 +1042,7 @@ Token procedure_AND_EXP_LIST_TAIL(Token token) {
 		case 48:
 			break;
 		default:
-			std::cout << "[SYNTAX ERROR] No rule found for AND_EXP_LIST_TAIL rule with token " << token;
+			std::cout << "[SYNTAX ERROR] No rule found for AND_EXP_TAIL rule with token " << token;
 			exit(1);
 	}
 	return token;
@@ -1048,47 +1051,47 @@ Token procedure_REL_EXP(Token token) {
 	switch((int)token) {
 		case 11:
 			token = procedure_ADD_EXP(token);
-			token = procedure_REL_EXP_LIST_TAIL(token);
+			token = procedure_REL_EXP_TAIL(token);
 			break;
 		case 12:
 			token = procedure_ADD_EXP(token);
-			token = procedure_REL_EXP_LIST_TAIL(token);
+			token = procedure_REL_EXP_TAIL(token);
 			break;
 		case 13:
 			token = procedure_ADD_EXP(token);
-			token = procedure_REL_EXP_LIST_TAIL(token);
+			token = procedure_REL_EXP_TAIL(token);
 			break;
 		case 22:
 			token = procedure_ADD_EXP(token);
-			token = procedure_REL_EXP_LIST_TAIL(token);
+			token = procedure_REL_EXP_TAIL(token);
 			break;
 		case 23:
 			token = procedure_ADD_EXP(token);
-			token = procedure_REL_EXP_LIST_TAIL(token);
+			token = procedure_REL_EXP_TAIL(token);
 			break;
 		case 24:
 			token = procedure_ADD_EXP(token);
-			token = procedure_REL_EXP_LIST_TAIL(token);
+			token = procedure_REL_EXP_TAIL(token);
 			break;
 		case 25:
 			token = procedure_ADD_EXP(token);
-			token = procedure_REL_EXP_LIST_TAIL(token);
+			token = procedure_REL_EXP_TAIL(token);
 			break;
 		case 26:
 			token = procedure_ADD_EXP(token);
-			token = procedure_REL_EXP_LIST_TAIL(token);
+			token = procedure_REL_EXP_TAIL(token);
 			break;
 		case 27:
 			token = procedure_ADD_EXP(token);
-			token = procedure_REL_EXP_LIST_TAIL(token);
+			token = procedure_REL_EXP_TAIL(token);
 			break;
 		case 43:
 			token = procedure_ADD_EXP(token);
-			token = procedure_REL_EXP_LIST_TAIL(token);
+			token = procedure_REL_EXP_TAIL(token);
 			break;
 		case 49:
 			token = procedure_ADD_EXP(token);
-			token = procedure_REL_EXP_LIST_TAIL(token);
+			token = procedure_REL_EXP_TAIL(token);
 			break;
 		default:
 			std::cout << "[SYNTAX ERROR] No rule found for REL_EXP rule with token " << token;
@@ -1096,7 +1099,7 @@ Token procedure_REL_EXP(Token token) {
 	}
 	return token;
 }
-Token procedure_REL_EXP_LIST_TAIL(Token token) {
+Token procedure_REL_EXP_TAIL(Token token) {
 	switch((int)token) {
 		case 6:
 			break;
@@ -1109,7 +1112,7 @@ Token procedure_REL_EXP_LIST_TAIL(Token token) {
 		case 22:
 			token = procedure_REL_OP(token);
 			token = procedure_ADD_EXP(token);
-			token = procedure_REL_EXP_LIST_TAIL(token);
+			token = procedure_REL_EXP_TAIL(token);
 			break;
 		case 29:
 			break;
@@ -1134,7 +1137,7 @@ Token procedure_REL_EXP_LIST_TAIL(Token token) {
 		case 48:
 			break;
 		default:
-			std::cout << "[SYNTAX ERROR] No rule found for REL_EXP_LIST_TAIL rule with token " << token;
+			std::cout << "[SYNTAX ERROR] No rule found for REL_EXP_TAIL rule with token " << token;
 			exit(1);
 	}
 	return token;
@@ -1143,47 +1146,47 @@ Token procedure_ADD_EXP(Token token) {
 	switch((int)token) {
 		case 11:
 			token = procedure_MUL_EXP(token);
-			token = procedure_ADD_EXP_LIST_TAIL(token);
+			token = procedure_ADD_EXP_TAIL(token);
 			break;
 		case 12:
 			token = procedure_MUL_EXP(token);
-			token = procedure_ADD_EXP_LIST_TAIL(token);
+			token = procedure_ADD_EXP_TAIL(token);
 			break;
 		case 13:
 			token = procedure_MUL_EXP(token);
-			token = procedure_ADD_EXP_LIST_TAIL(token);
+			token = procedure_ADD_EXP_TAIL(token);
 			break;
 		case 22:
 			token = procedure_MUL_EXP(token);
-			token = procedure_ADD_EXP_LIST_TAIL(token);
+			token = procedure_ADD_EXP_TAIL(token);
 			break;
 		case 23:
 			token = procedure_MUL_EXP(token);
-			token = procedure_ADD_EXP_LIST_TAIL(token);
+			token = procedure_ADD_EXP_TAIL(token);
 			break;
 		case 24:
 			token = procedure_MUL_EXP(token);
-			token = procedure_ADD_EXP_LIST_TAIL(token);
+			token = procedure_ADD_EXP_TAIL(token);
 			break;
 		case 25:
 			token = procedure_MUL_EXP(token);
-			token = procedure_ADD_EXP_LIST_TAIL(token);
+			token = procedure_ADD_EXP_TAIL(token);
 			break;
 		case 26:
 			token = procedure_MUL_EXP(token);
-			token = procedure_ADD_EXP_LIST_TAIL(token);
+			token = procedure_ADD_EXP_TAIL(token);
 			break;
 		case 27:
 			token = procedure_MUL_EXP(token);
-			token = procedure_ADD_EXP_LIST_TAIL(token);
+			token = procedure_ADD_EXP_TAIL(token);
 			break;
 		case 43:
 			token = procedure_MUL_EXP(token);
-			token = procedure_ADD_EXP_LIST_TAIL(token);
+			token = procedure_ADD_EXP_TAIL(token);
 			break;
 		case 49:
 			token = procedure_MUL_EXP(token);
-			token = procedure_ADD_EXP_LIST_TAIL(token);
+			token = procedure_ADD_EXP_TAIL(token);
 			break;
 		default:
 			std::cout << "[SYNTAX ERROR] No rule found for ADD_EXP rule with token " << token;
@@ -1191,7 +1194,7 @@ Token procedure_ADD_EXP(Token token) {
 	}
 	return token;
 }
-Token procedure_ADD_EXP_LIST_TAIL(Token token) {
+Token procedure_ADD_EXP_TAIL(Token token) {
 	switch((int)token) {
 		case 6:
 			break;
@@ -1200,12 +1203,12 @@ Token procedure_ADD_EXP_LIST_TAIL(Token token) {
 		case 14:
 			token = procedure_SUMINUS(token);
 			token = procedure_MUL_EXP(token);
-			token = procedure_ADD_EXP_LIST_TAIL(token);
+			token = procedure_ADD_EXP_TAIL(token);
 			break;
 		case 15:
 			token = procedure_SUMINUS(token);
 			token = procedure_MUL_EXP(token);
-			token = procedure_ADD_EXP_LIST_TAIL(token);
+			token = procedure_ADD_EXP_TAIL(token);
 			break;
 		case 20:
 			break;
@@ -1236,7 +1239,7 @@ Token procedure_ADD_EXP_LIST_TAIL(Token token) {
 		case 48:
 			break;
 		default:
-			std::cout << "[SYNTAX ERROR] No rule found for ADD_EXP_LIST_TAIL rule with token " << token;
+			std::cout << "[SYNTAX ERROR] No rule found for ADD_EXP_TAIL rule with token " << token;
 			exit(1);
 	}
 	return token;
@@ -1245,47 +1248,47 @@ Token procedure_MUL_EXP(Token token) {
 	switch((int)token) {
 		case 11:
 			token = procedure_POW_EXP(token);
-			token = procedure_MUL_EXP_LIST_TAIL(token);
+			token = procedure_MUL_EXP_TAIL(token);
 			break;
 		case 12:
 			token = procedure_POW_EXP(token);
-			token = procedure_MUL_EXP_LIST_TAIL(token);
+			token = procedure_MUL_EXP_TAIL(token);
 			break;
 		case 13:
 			token = procedure_POW_EXP(token);
-			token = procedure_MUL_EXP_LIST_TAIL(token);
+			token = procedure_MUL_EXP_TAIL(token);
 			break;
 		case 22:
 			token = procedure_POW_EXP(token);
-			token = procedure_MUL_EXP_LIST_TAIL(token);
+			token = procedure_MUL_EXP_TAIL(token);
 			break;
 		case 23:
 			token = procedure_POW_EXP(token);
-			token = procedure_MUL_EXP_LIST_TAIL(token);
+			token = procedure_MUL_EXP_TAIL(token);
 			break;
 		case 24:
 			token = procedure_POW_EXP(token);
-			token = procedure_MUL_EXP_LIST_TAIL(token);
+			token = procedure_MUL_EXP_TAIL(token);
 			break;
 		case 25:
 			token = procedure_POW_EXP(token);
-			token = procedure_MUL_EXP_LIST_TAIL(token);
+			token = procedure_MUL_EXP_TAIL(token);
 			break;
 		case 26:
 			token = procedure_POW_EXP(token);
-			token = procedure_MUL_EXP_LIST_TAIL(token);
+			token = procedure_MUL_EXP_TAIL(token);
 			break;
 		case 27:
 			token = procedure_POW_EXP(token);
-			token = procedure_MUL_EXP_LIST_TAIL(token);
+			token = procedure_MUL_EXP_TAIL(token);
 			break;
 		case 43:
 			token = procedure_POW_EXP(token);
-			token = procedure_MUL_EXP_LIST_TAIL(token);
+			token = procedure_MUL_EXP_TAIL(token);
 			break;
 		case 49:
 			token = procedure_POW_EXP(token);
-			token = procedure_MUL_EXP_LIST_TAIL(token);
+			token = procedure_MUL_EXP_TAIL(token);
 			break;
 		default:
 			std::cout << "[SYNTAX ERROR] No rule found for MUL_EXP rule with token " << token;
@@ -1293,7 +1296,7 @@ Token procedure_MUL_EXP(Token token) {
 	}
 	return token;
 }
-Token procedure_MUL_EXP_LIST_TAIL(Token token) {
+Token procedure_MUL_EXP_TAIL(Token token) {
 	switch((int)token) {
 		case 6:
 			break;
@@ -1306,12 +1309,12 @@ Token procedure_MUL_EXP_LIST_TAIL(Token token) {
 		case 16:
 			token = procedure_MULDIV(token);
 			token = procedure_POW_EXP(token);
-			token = procedure_MUL_EXP_LIST_TAIL(token);
+			token = procedure_MUL_EXP_TAIL(token);
 			break;
 		case 17:
 			token = procedure_MULDIV(token);
 			token = procedure_POW_EXP(token);
-			token = procedure_MUL_EXP_LIST_TAIL(token);
+			token = procedure_MUL_EXP_TAIL(token);
 			break;
 		case 20:
 			break;
@@ -1342,7 +1345,7 @@ Token procedure_MUL_EXP_LIST_TAIL(Token token) {
 		case 48:
 			break;
 		default:
-			std::cout << "[SYNTAX ERROR] No rule found for MUL_EXP_LIST_TAIL rule with token " << token;
+			std::cout << "[SYNTAX ERROR] No rule found for MUL_EXP_TAIL rule with token " << token;
 			exit(1);
 	}
 	return token;
@@ -1351,47 +1354,47 @@ Token procedure_POW_EXP(Token token) {
 	switch((int)token) {
 		case 11:
 			token = procedure_UNARY_EXP(token);
-			token = procedure_POW_EXP_LIST_TAIL(token);
+			token = procedure_POW_EXP_TAIL(token);
 			break;
 		case 12:
 			token = procedure_UNARY_EXP(token);
-			token = procedure_POW_EXP_LIST_TAIL(token);
+			token = procedure_POW_EXP_TAIL(token);
 			break;
 		case 13:
 			token = procedure_UNARY_EXP(token);
-			token = procedure_POW_EXP_LIST_TAIL(token);
+			token = procedure_POW_EXP_TAIL(token);
 			break;
 		case 22:
 			token = procedure_UNARY_EXP(token);
-			token = procedure_POW_EXP_LIST_TAIL(token);
+			token = procedure_POW_EXP_TAIL(token);
 			break;
 		case 23:
 			token = procedure_UNARY_EXP(token);
-			token = procedure_POW_EXP_LIST_TAIL(token);
+			token = procedure_POW_EXP_TAIL(token);
 			break;
 		case 24:
 			token = procedure_UNARY_EXP(token);
-			token = procedure_POW_EXP_LIST_TAIL(token);
+			token = procedure_POW_EXP_TAIL(token);
 			break;
 		case 25:
 			token = procedure_UNARY_EXP(token);
-			token = procedure_POW_EXP_LIST_TAIL(token);
+			token = procedure_POW_EXP_TAIL(token);
 			break;
 		case 26:
 			token = procedure_UNARY_EXP(token);
-			token = procedure_POW_EXP_LIST_TAIL(token);
+			token = procedure_POW_EXP_TAIL(token);
 			break;
 		case 27:
 			token = procedure_UNARY_EXP(token);
-			token = procedure_POW_EXP_LIST_TAIL(token);
+			token = procedure_POW_EXP_TAIL(token);
 			break;
 		case 43:
 			token = procedure_UNARY_EXP(token);
-			token = procedure_POW_EXP_LIST_TAIL(token);
+			token = procedure_POW_EXP_TAIL(token);
 			break;
 		case 49:
 			token = procedure_UNARY_EXP(token);
-			token = procedure_POW_EXP_LIST_TAIL(token);
+			token = procedure_POW_EXP_TAIL(token);
 			break;
 		default:
 			std::cout << "[SYNTAX ERROR] No rule found for POW_EXP rule with token " << token;
@@ -1399,7 +1402,7 @@ Token procedure_POW_EXP(Token token) {
 	}
 	return token;
 }
-Token procedure_POW_EXP_LIST_TAIL(Token token) {
+Token procedure_POW_EXP_TAIL(Token token) {
 	switch((int)token) {
 		case 6:
 			break;
@@ -1416,7 +1419,7 @@ Token procedure_POW_EXP_LIST_TAIL(Token token) {
 		case 18:
 			token = match("^", token);
 			token = procedure_UNARY_EXP(token);
-			token = procedure_POW_EXP_LIST_TAIL(token);
+			token = procedure_POW_EXP_TAIL(token);
 			break;
 		case 20:
 			break;
@@ -1447,7 +1450,7 @@ Token procedure_POW_EXP_LIST_TAIL(Token token) {
 		case 48:
 			break;
 		default:
-			std::cout << "[SYNTAX ERROR] No rule found for POW_EXP_LIST_TAIL rule with token " << token;
+			std::cout << "[SYNTAX ERROR] No rule found for POW_EXP_TAIL rule with token " << token;
 			exit(1);
 	}
 	return token;

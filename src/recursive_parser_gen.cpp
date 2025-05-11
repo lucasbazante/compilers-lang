@@ -29,7 +29,7 @@ std::string code = "#include <cstdlib>\n"
                    "   }\n"
                    "   else {\n"
                    "       // parar execução\n"
-                   "       std::cout << \"info\\n\";\n"
+                   "       std::cout << \"expected \" << str_ << \" but found \" << current_token << std::endl;\n"
                    "       exit(1);\n"
                    "   }\n"
                    "}";
