@@ -1,0 +1,9 @@
+program swapexample
+begin
+    procedure main ( )
+    begin
+        var x : int
+    in
+        x := 42
+    end
+end

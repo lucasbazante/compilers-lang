@@ -137,10 +137,10 @@ inline std::ostream& operator<<(std::ostream& os, const Token& token) {
 		case Token::And:	os << "&&"; break;
 		case Token::Or:		os << "||"; break;
 		case Token::Comparison: os << "comparison"; break;
-		case Token::Int_L:	os << "int literal"; break;
+		case Token::Int_L:	os << "int_literal"; break;
 		case Token::Float_L:	os << "float literal"; break;
-		case Token::Bool_L:	os << "bool literal"; break;
-		case Token::String_L:	os << "string literal"; break;
+		case Token::Bool_L:	os << "bool_literal"; break;
+		case Token::String_L:	os << "string_literal"; break;
 		case Token::Null:	os << "null"; break;
 		case Token::If:		os << "if"; break;
 		case Token::Then:	os << "then"; break;
@@ -162,7 +162,8 @@ inline std::ostream& operator<<(std::ostream& os, const Token& token) {
 		case Token::L_Bracket:	os << "{"; break;
 		case Token::R_Bracket:	os << "}"; break;
 		case Token::Dot:	os << "."; break;
-		case Token::Identifier: os << "id"; break;
+		case Token::Comma:	os << ","; break;
+		case Token::Identifier: os << "name"; break;
 		case Token::TEOF:	os << "EOF"; break;
 	}
 
