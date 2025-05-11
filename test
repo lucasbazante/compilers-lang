@@ -16,12 +16,12 @@ echo "Running $1 parser..."
 # Loop through each file in the folder
 for FILE in "$FOLDER"/*; do
   if [ -f "$FILE" ]; then
-    ("$SCRIPT" < "$FILE") > 'tmp.txt'
+    ("$SCRIPT" < "$FILE") 2> 'tmp.txt'
     EXIT_CODE=$?
     if [ $EXIT_CODE -eq 1 ]; then
       echo "[TEST] $FILE : Detected error"
-      CONTENT="$(</tmp/compiler_results.txt)"
-      echo "[MESSAGE] $CONTENT"
+      CONTENT="$(<tmp.txt)"
+      echo "$CONTENT"
     else 
       echo "[TEST] $FILE : Success"
     fi
