@@ -71,8 +71,6 @@ int main() {
 				return match(symbol, &parse_stack);
 				
 			} else if constexpr (std::is_same_v<T, Rule>) {
-				std::cout << symbol << std::endl;
-				std::cout << curr_token << std::endl << std::endl;
 				auto derivation = get_derivation(symbol, curr_token, table);
 				return match_rule(derivation, &parse_stack);
 			}
