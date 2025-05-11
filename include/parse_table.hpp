@@ -1,3 +1,5 @@
+#ifndef PARSE_TABLE_HPP
+#define PARSE_TABLE_HPP
 #include <sstream>
 #include <variant>
 #include <vector>
@@ -181,27 +183,7 @@ inline const std::optional<SymbolSequence>& get_derivation(Rule rule, Token toke
 }
 
 
-inline const std::string get_expected_from(Rule rule, Token unexpected, const ParseTable& table) {
-	std::ostringstream oss;
-	oss << "Expected one of:\n";
 
-	bool found = false;
-	for (size_t i = 0; i < static_cast<size_t>(Token::COUNT); ++i) {
-		Token t = static_cast<Token>(i);
-
-		if (t == unexpected) continue;
-
-		if (table[static_cast<size_t>(rule)][i].has_value()) {
-			found = true;
-			oss << "  - " << t << "\n";
-		}
-	}
-
-	if (!found)
-		oss << "  (no valid tokens found)\n";
-
-	return oss.str();
-}
 
 
 inline ParseTable build_parse_table() {
@@ -655,3 +637,4 @@ inline ParseTable build_parse_table() {
 
     return table;
 }
+#endif

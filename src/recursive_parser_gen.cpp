@@ -9,7 +9,8 @@ std::string code = "#include <cstdlib>\n"
                    "#include <sstream>\n"
                    "#include <variant>\n"
                    "#include <string>\n"
-                   "#include \"lexer.hpp\""
+                   "#include \"lexer.hpp\"\n"
+                   "#include \"utils.hpp\"\n"
                    "\n"
                    "\n"
                    "\n"
@@ -21,15 +22,15 @@ std::string code = "#include <cstdlib>\n"
                    "}\n"
                    "\n"
                    "\n"
-                   "Token match(std::string str_, Token current_token) {\n"
+                   "Token match(Token expected, Token actual) {\n"
                    "\n"
-                   "   if (token_to_string(current_token) == str_) {\n"
+                   "   if (actual == expected) {\n"
                    "       Token token = static_cast<Token>(yylex());\n"
                    "       return token;\n"
                    "   }\n"
                    "   else {\n"
                    "       // parar execução\n"
-                   "       std::cout << \"expected \" << str_ << \" but found \" << current_token << std::endl;\n"
+                   "       log_expected_another_token_error(actual);\n"
                    "       exit(1);\n"
                    "   }\n"
                    "}";
@@ -61,7 +62,7 @@ int main() {
                                     "\t\t\t\tstd::cerr << \"[SYNTAX ERROR]\\nInput not fully consumed!\\n\";\n"
                                     "\t\t\t}\n";
                         } else {
-                            file << "\t\t\ttoken = match(\"" << (Token) std::get<Token>(el) << "\", token);\n";
+                            file << "\t\t\ttoken = match((Token)" << (int) std::get<Token>(el) << ", token);\n";
                         }
                     } else {
                         file << "\t\t\ttoken = procedure_" << (Rule) std::get<Rule>(el) << "(token);\n";
@@ -72,7 +73,7 @@ int main() {
         }
 
         file << "\t\tdefault:\n";
-        file << "\t\t\tstd::cout << \"[SYNTAX ERROR] No rule found for " << (Rule)i << " rule with token \" << token;\n";
+        file << "\t\t\tlog_unexpected_token_error((Rule)" << i << ", token);";
         file << "\t\t\texit(1);\n";
         file << "\t}\n";
         file << "\treturn token;\n}\n";

@@ -7,6 +7,7 @@
 
 #include "parse_table.hpp"
 #include "lexer.hpp"
+#include "utils.hpp"
 
 using ParseStack = std::stack<Symbol>;
 
@@ -23,13 +24,7 @@ bool match(Token tk, ParseStack* stack) {
 		return true;
 	}
 
-	std::cerr << "[SYNTAX ERROR]\nExpected token `"
-		  << tk
-		  << "` but got `"
-		  << yytext
-		  << "` at ("
-		  << yylineno << "," << yycolumn
-		  << ").\n";
+	log_expected_another_token_error(tk);
 
 	return false;
 }
@@ -45,13 +40,7 @@ bool match_rule(std::optional<SymbolSequence> derivation, ParseStack* stack, Rul
 		return true;	
 	}
 
-	std::cerr << "[SYNTAX ERROR]\nUnexpected token `"
-		  << yytext
-		  << "` at ("
-		  << yylineno << "," << yycolumn
-		  << ").\n"
-		  << get_expected_from(rule, curr_token, table)
-		  << "\n";
+    log_unexpected_token_error(rule, curr_token, table);
 
 	return false;
 }
