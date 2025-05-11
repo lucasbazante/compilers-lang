@@ -35,7 +35,7 @@ bool match(Token tk, ParseStack* stack) {
 }
 
 
-bool match_rule(std::optional<SymbolSequence> derivation, ParseStack* stack) {
+bool match_rule(std::optional<SymbolSequence> derivation, ParseStack* stack, Rule rule, ParseTable& table) {
 	if (derivation.has_value()) {
 		stack->pop();
 		
@@ -49,7 +49,9 @@ bool match_rule(std::optional<SymbolSequence> derivation, ParseStack* stack) {
 		  << yytext
 		  << "` at ("
 		  << yylineno << "," << yycolumn
-		  << ").\n";
+		  << ").\n"
+		  << get_expected_from(rule, curr_token, table)
+		  << "\n";
 
 	return false;
 }
@@ -72,7 +74,7 @@ int main() {
 				
 			} else if constexpr (std::is_same_v<T, Rule>) {
 				auto derivation = get_derivation(symbol, curr_token, table);
-				return match_rule(derivation, &parse_stack);
+				return match_rule(derivation, &parse_stack, symbol, table);
 			}
 
 			return false;

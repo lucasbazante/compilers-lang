@@ -13,9 +13,16 @@
 	int yycolumn = 1,
 	    prev_col = 1;
 
-	#define YY_USER_ACTION \
-		yycolumn = prev_col; \
-		prev_col += yyleng;
+	#define YY_USER_ACTION                                         \
+		yycolumn = prev_col;                                   \
+		for (int i = 0; i < yyleng; ++i) {                     \
+			if (yytext[i] == '\t') {                       \
+				int spaces = 8 - ((prev_col - 1) % 8); \
+				prev_col += spaces;                    \
+			} else {				       \
+				prev_col += 1;			       \
+			}                                              \
+		}
 %}
 
 %option noyywrap
