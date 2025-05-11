@@ -1,0 +1,13 @@
+// Parâmetros com sintaxe incorreta
+program procFail
+begin
+	procedure compute(x int): int
+	begin
+	in
+		return(x)
+	end;
+	procedure main ()
+	begin
+	in
+	end
+end

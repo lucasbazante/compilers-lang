@@ -1,0 +1,12 @@
+// While sem do
+program missingDo
+begin
+	procedure main()
+	begin
+		var a : int := 0
+	in
+		while a < 5
+		  a := a + 1
+		od
+	end
+end

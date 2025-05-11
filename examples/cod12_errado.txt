@@ -1,0 +1,10 @@
+// Expressão solta
+program statementError
+begin
+	5 + 3
+in
+	procedure main()
+	begin
+	in
+	end
+end

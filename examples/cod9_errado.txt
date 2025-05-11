@@ -1,0 +1,9 @@
+// Declaração incorreta de variável
+program badVar
+begin
+	procedure main()
+	begin
+		var x
+	in
+	end
+end

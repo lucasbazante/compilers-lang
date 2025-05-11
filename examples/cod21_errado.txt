@@ -1,0 +1,12 @@
+// Expressão solta no while
+program exprInWhile
+begin
+	procedure main ()
+	begin
+		var b : int := 1
+	in
+		while b < 10 do
+		  b + 1
+		od
+	end
+end

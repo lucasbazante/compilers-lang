@@ -1,0 +1,13 @@
+// Until sem expressão depois
+program invalidUntilExpr
+begin
+	procedure main()
+	begin
+		var done : bool := false
+	in
+		do
+		  done := true
+		until
+		od
+	end
+end

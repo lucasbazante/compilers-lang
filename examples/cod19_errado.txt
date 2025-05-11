@@ -1,0 +1,12 @@
+// Until sem od
+program missingOd
+begin
+	procedure main()
+	begin
+		var x : int := 0
+	in
+		do
+			x := x + 1
+		until x = 5
+	end
+end

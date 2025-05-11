@@ -1,0 +1,10 @@
+program prog1
+begin
+	procedure main()
+	begin
+		var x : int := 5
+	in
+		x := 10;
+		return(x)
+	end
+end

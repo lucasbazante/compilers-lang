@@ -1,0 +1,11 @@
+program withStruct
+begin
+	procedure main()
+	begin
+		struct Point {
+		  x : int;
+		  y : int
+		}
+	in
+	end
+end

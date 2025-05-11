@@ -1,0 +1,7 @@
+program myProg
+begin
+    procedure main()
+    begin
+    in
+    end
+end
