@@ -5,3 +5,4 @@ build/*
 errors.log
 code_samples/
 run_parser.sh
+.vscode
