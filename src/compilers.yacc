@@ -8,13 +8,20 @@ int yylex(void);
 
 %token PROGRAM NAME BEGIN END VAR PROCEDURE STRUCT ':' ASSIGN
 %token '(' ')' '{' '}' ';' ','
-%token IF THEN ELSE FI WHILE DO OD RETURN NEW REF DEREF
+%token IF THEN ELSE FI WHILE DO OD RETURN NEW REF DEREF IN
 %token FOR TO STEP UNTIL
 %token INT_LITERAL FLOAT_LITERAL STRING_LITERAL BOOL_LITERAL NULLVAL
 %token INT FLOAT STRING BOOL
 
-%token AND OR NOT '<' LE '>' GE '=' NEQ
-%token '+' '-' '*' '\' '^' '.'
+%left OR
+%left AND
+%nonassoc NOT
+%nonassoc COMPARISON
+%left SUM MINUS
+%left MULT DIV
+%right EX
+%left UNARYMINUS
+%left '.'
 
 %start program
 
@@ -156,8 +163,12 @@ exp:
     exp AND exp
     | exp OR exp
     | NOT exp
-    | exp REL_OP exp
-    | exp ARITH_OP exp
+    | exp COMPARISON exp
+    | exp SUM exp
+    | exp MINUS exp
+    | exp DIV exp
+    | exp MULT exp
+    | exp EX exp
     | literal
     | call_stmt
     | NEW NAME
@@ -203,26 +214,7 @@ return_type_opt:
     | ':' type
     ;
 
-REL_OP:
-      '<'
-    | LE
-    | '>'
-    | GE
-    | '='
-    | NEQ
-    ;
-
-ARITH_OP:
-      '+'
-    | '-'
-    | '*'
-    | '\'
-    | '^'
-    ;
-
 %%
-
-// TODO: MAIOR PRECEDÊNCIA É O PONTO
 
 void yyerror(const char *s) {
     fprintf(stderr, "Erro: %s\n", s);
