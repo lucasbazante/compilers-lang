@@ -4,7 +4,6 @@
 #include "tokens.hpp"
 #include "symbol_table.hpp"
 
-extern TokenData yylval;
 extern SymbolTable sb;
 extern int yylex(void);
 extern int yylineno;

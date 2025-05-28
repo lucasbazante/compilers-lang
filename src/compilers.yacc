@@ -1,12 +1,20 @@
 %{
+
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "tokens.hpp"
 void yyerror(const char *s);
 int yylex(void);
+
 %}
 
-%token PROGRAM NAME BEGIN END VAR PROCEDURE STRUCT ':' ASSIGN
+%define api.value.type {TokenData}
+%code requires {
+    #include "lexer.hpp"
+}
+
+
+%token PROGRAM NAME TBEGIN END VAR PROCEDURE STRUCT ':' ASSIGN
 %token '(' ')' '{' '}' ';' ','
 %token IF THEN ELSE FI WHILE DO OD RETURN NEW REF DEREF IN
 %token FOR TO STEP UNTIL
@@ -28,7 +36,7 @@ int yylex(void);
 %%
 
 program:
-    PROGRAM NAME BEGIN decl_list_opt END
+    PROGRAM NAME TBEGIN decl_list_opt END
     ;
 
 decl_list_opt:
@@ -54,7 +62,7 @@ var_decl:
     ;
 
 proc_decl:
-    PROCEDURE NAME '(' paramfield_list_opt ')' return_type_opt BEGIN proc_body END
+    PROCEDURE NAME '(' paramfield_list_opt ')' return_type_opt TBEGIN proc_body END
     ;
 
 proc_body:
@@ -216,10 +224,10 @@ return_type_opt:
 
 %%
 
-void yyerror(const char *s) {
-    fprintf(stderr, "Erro: %s\n", s);
+int main(void) {
+  return yyparse();
 }
 
-int main() {
-    return yyparse();
+void yyerror(const char *s) {
+  fprintf(stderr, "Error: %s\n", s);
 }
