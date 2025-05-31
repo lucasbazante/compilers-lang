@@ -21,7 +21,7 @@ add_executable(tokenizer_test
 
 add_executable(table_parser
     ${FLEX_Lexer_OUTPUTS}
-    src/parser.cpp
+    src/table_parser.cpp
 )
 
 add_executable(recursive_parser

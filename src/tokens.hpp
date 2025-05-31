@@ -7,74 +7,77 @@
 enum class Token {
 	// simples
 	Int = 0,
-	Float,
-	Bool,
-	String,
+	Float = 1,
+	Bool = 2,
+	String = 3,
 
 	// declarations (program, var, procedures ands)
-	Program,
-	Begin,
-	In,
-	End,
-	Var,
-	Procedure,
-	Struct,
-	New,
+	Program = 4,
+	Begin = 5,
+	In = 6,
+	End = 7,
+	Var = 8,
+	Procedure = 9,
+	Struct = 10,
+	New = 11,
 
 	// references
-	Ref,
-	Deref,
-	
-	// arithmetic operators
-	Plus,
-	Minus,
-	Times,
-	Divides,
-	Pow,
-	Modulo,
-
-	// logical operators && relations
-	And,
-	Or,
-	Comparison,
+	Ref = 12,
+	Deref = 13,
 
 	// Literals
-	Int_L,
-	Float_L,
-	Bool_L,
-	String_L,
-	Null,
+	Int_L = 14,
+	Float_L = 15,
+	Bool_L = 16,
+	String_L = 17,
+	Null = 18,
 
 	// control-flow
-	If,
-	Then,
-	Else,
-	Fi,
-	While,
-	Do,
-	Until,
-	Od,
-	For,
-	To,
-	Step,
-	Return,
+	If = 19,
+	Then = 20,
+	Else = 21,
+	Fi = 22,
+	While = 23,
+	Do = 24,
+	Until = 25,
+	Od = 26,
+	For = 27,
+	To = 28,
+	Step = 29,
+	Return = 30,
+	// tem q colocar o '='
 
 	// special characters
-	Semicolon,
-	Colon,
-	Assign,
-	L_Paren,
-	R_Paren,
-	L_Bracket,
-	R_Bracket,
-	Dot,
-	Comma,
+	Semicolon = 31,
+	Colon = 32,
+	Assign = 33,
+	L_Paren = 34,
+	R_Paren = 35,
+	L_Bracket = 36,
+	R_Bracket = 37,
+	Comma = 38,
+	Dot = 39,
 
 	// most generic, the identifier
-	Identifier,
+	Identifier = 40,
+
+	// arithmetic operators
+	Plus = 41,
+	Minus = 42,
+	Times = 43,
+	Divides = 44,
+	Pow = 45,
+	Modulo = 46, // TODO: ei! Não tem isso não...
+	// TODO: tem q colocar o unaryminus
+	// TODO: tem q colocar o not
+
+	// logical operators && relations
+	And = 47,
+	Or = 48,
+	Comparison = 49,
 
 	// end of file
-	TEOF,
+	TEOF = 50,
 
 	COUNT
 };

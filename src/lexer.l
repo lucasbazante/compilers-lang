@@ -3,7 +3,7 @@
 	#include <stdlib.h>
 
 	#include "lexer.hpp"
-	#include "parser.hpp"
+	#include "lr_parser.hpp"
 
 	#define YYSTYPE TokenData
 	#define YYSTYPE_IS_DECLARED 1
@@ -105,6 +105,5 @@ null			    { yylval = std::monostate{}; return static_cast<int>(Token::Null); }
 
 \n        { yycolumn = 1; prev_col = 1; }
 .	  { }
-<<EOF>>   { return static_cast<int>(Token::TEOF); }
 
 %%

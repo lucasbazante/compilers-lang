@@ -8,35 +8,35 @@ int yylex(void);
 
 %}
 
+%define parse.error verbose
 %define api.value.type {TokenData}
 %code requires {
     #include "lexer.hpp"
 }
 
+%token Int 0 Float 1 Bool 2 String 3
+%token Program 4 Begin 5 In 6 End 7 Var 8 Procedure 9 Struct 10 New 11
+%token Ref 12 Deref 13 Int_L 14 Float_L 15 Bool_L 16 String_L 17 Null 18
+%token If 19 Then 20 Else 21 Fi 22 While 23 Do 24 Until 25 Od 26 For 27 To 28 Step 29 Return 30
+%token Semicolon 31 Colon 32 Assign 33 L_Paren 34 R_Paren 35 L_Bracket 36 R_Bracket 37 Comma 38
+%token Identifier 40
 
-%token PROGRAM NAME TBEGIN END VAR PROCEDURE STRUCT ':' ASSIGN
-%token '(' ')' '{' '}' ';' ','
-%token IF THEN ELSE FI WHILE DO OD RETURN NEW REF DEREF IN
-%token FOR TO STEP UNTIL
-%token INT_LITERAL FLOAT_LITERAL STRING_LITERAL BOOL_LITERAL NULLVAL
-%token INT FLOAT STRING BOOL
-
-%left OR
-%left AND
-%nonassoc NOT
-%nonassoc COMPARISON
-%left SUM MINUS
-%left MULT DIV
-%right EX
-%left UNARYMINUS
-%left '.'
+%left Or 48
+%left And 47
+%nonassoc Not 1001
+%nonassoc Comparison 49
+%left Plus 41 Minus 42
+%left Times 43 Divides 44
+%right Pow 45
+%left UNARYMINUS 1002
+%left Dot 39
 
 %start program
 
 %%
 
 program:
-    PROGRAM NAME TBEGIN decl_list_opt END
+    Program Identifier Begin decl_list_opt End
     ;
 
 decl_list_opt:
@@ -46,7 +46,7 @@ decl_list_opt:
 
 decl_list:
     decl
-    | decl_list ';' decl
+    | decl_list Semicolon decl
     ;
 
 decl:
@@ -56,13 +56,13 @@ decl:
     ;
 
 var_decl:
-    VAR NAME ':' type
-    | VAR NAME ':' type ASSIGN exp
-    | VAR NAME ASSIGN exp
+    Var Identifier Colon type
+    | Var Identifier Colon type Assign exp
+    | Var Identifier Assign exp
     ;
 
 proc_decl:
-    PROCEDURE NAME '(' paramfield_list_opt ')' return_type_opt TBEGIN proc_body END
+    Procedure Identifier L_Paren paramfield_list_opt R_Paren return_type_opt Begin proc_body End
     ;
 
 proc_body:
@@ -75,11 +75,12 @@ decl_block_opt:
     ;
 
 decl_block:
-    decl_list IN
+    In
+    | decl_list In
     ;
 
 rec_decl:
-    STRUCT NAME '{' paramfield_decl_list_opt '}'
+    Struct Identifier L_Bracket paramfield_decl_list_opt R_Bracket
     ;
 
 paramfield_decl_list_opt:
@@ -89,7 +90,7 @@ paramfield_decl_list_opt:
 
 paramfield_decl_list:
     paramfield_decl
-    | paramfield_decl_list ';' paramfield_decl
+    | paramfield_decl_list Semicolon paramfield_decl
     ;
 
 paramfield_list_opt:
@@ -99,17 +100,17 @@ paramfield_list_opt:
 
 paramfield_list:
     paramfield_decl
-    | paramfield_list ',' paramfield_decl
+    | paramfield_list Comma paramfield_decl
     ;
 
 paramfield_decl:
-    NAME ':' type
+    Identifier Colon type
     ;
 
 stmt_list:
     /* empty */
     | stmt
-    | stmt_list ';' stmt
+    | stmt_list Semicolon stmt
     ;
 
 stmt:
@@ -123,38 +124,38 @@ stmt:
     ;
 
 assign_stmt:
-    var ASSIGN exp
-    | deref_var ASSIGN exp
+    var Assign exp
+    | deref_var Assign exp
     ;
 
 if_stmt:
-    IF exp THEN stmt_list else_opt FI
+    If exp Then stmt_list else_opt Fi
     ;
 
 else_opt:
     /* empty */
-    | ELSE stmt_list
+    | Else stmt_list
     ;
 
 while_stmt:
-    WHILE exp DO stmt_list OD
+    While exp Do stmt_list Od
     ;
 
 for_stmt:
-    FOR var '=' exp TO exp STEP exp DO stmt_list OD
+    For var Assign exp To exp Step exp Do stmt_list Od
     ;
 
 do_until_stmt:
-    DO stmt_list UNTIL exp OD
+    Do stmt_list Until exp Od
     ;
 
 return_stmt:
-    RETURN
-    | RETURN exp
+    Return
+    | Return exp
     ;
 
 call_stmt:
-    NAME '(' exp_list_opt ')'
+    Identifier L_Paren exp_list_opt R_Paren
     ;
 
 exp_list_opt:
@@ -164,62 +165,62 @@ exp_list_opt:
 
 exp_list:
     exp
-    | exp_list ',' exp
+    | exp_list Comma exp
     ;
 
 exp:
-    exp AND exp
-    | exp OR exp
-    | NOT exp
-    | exp COMPARISON exp
-    | exp SUM exp
-    | exp MINUS exp
-    | exp DIV exp
-    | exp MULT exp
-    | exp EX exp
+    exp And exp
+    | exp Or exp
+    | Not exp
+    | exp Comparison exp
+    | exp Plus exp
+    | exp Minus exp
+    | exp Divides exp
+    | exp Times exp
+    | exp Pow exp
     | literal
     | call_stmt
-    | NEW NAME
+    | New Identifier
     | var
     | ref_var
     | deref_var
-    | '(' exp ')'
+    | L_Paren exp R_Paren
     ;
 
 ref_var:
-    REF '(' var ')'
+    Ref L_Paren var R_Paren
     ;
 
 deref_var:
-    DEREF '(' var ')'
-    | DEREF '(' deref_var ')'
+    Deref L_Paren var R_Paren
+    | Deref L_Paren deref_var R_Paren
     ;
 
 var:
-    NAME
-    | exp '.' NAME
+    Identifier
+    | exp Dot Identifier
     ;
 
 literal:
-    INT_LITERAL
-    | FLOAT_LITERAL
-    | STRING_LITERAL
-    | BOOL_LITERAL
-    | NULLVAL
+    Int_L
+    | Float_L
+    | String_L
+    | Bool_L
+    | Null
     ;
 
 type:
-    INT
-    | FLOAT
-    | STRING
-    | BOOL
-    | NAME
-    | REF '(' type ')'
+    Int
+    | Float
+    | String
+    | Bool
+    | Identifier
+    | Ref L_Paren type R_Paren
     ;
 
 return_type_opt:
     /* empty */
-    | ':' type
+    | Colon type
     ;
 
 %%
@@ -228,6 +229,7 @@ int main(void) {
   return yyparse();
 }
 
-void yyerror(const char *s) {
-  fprintf(stderr, "Error: %s\n", s);
+void yyerror(const char *msg) {
+    fprintf(stderr, "Syntax error: %s at '%s' (line %d, column %d)\n",
+            msg, yytext, yylineno, yycolumn);
 }
