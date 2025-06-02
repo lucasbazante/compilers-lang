@@ -19,7 +19,7 @@
 		yycolumn = prev_col;                                   \
 		for (int i = 0; i < yyleng; ++i) {                     \
 			if (yytext[i] == '\t') {                       \
-				int spaces = 8 - ((prev_col - 1) % 8); \
+				int spaces = 4 - ((prev_col - 1) % 4); \
 				prev_col += spaces;                    \
 			} else {				       \
 				prev_col += 1;			       \
