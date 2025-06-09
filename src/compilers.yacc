@@ -24,7 +24,7 @@ int yylex(void);
 %left Or 48
 %left And 47
 %nonassoc Not 1001
-%nonassoc Comparison 49
+%nonassoc Comparison 49 Equals 50
 %left Plus 41 Minus 42
 %left Times 43 Divides 44
 %right Pow 45
@@ -142,7 +142,7 @@ while_stmt:
     ;
 
 for_stmt:
-    For var Assign exp To exp Step exp Do stmt_list Od
+    For Identifier Equals exp To exp Step exp Do stmt_list Od
     ;
 
 do_until_stmt:
@@ -202,9 +202,9 @@ var:
     ;
 
 literal:
-    Int_L
-    | Float_L
-    | String_L
+    Int_L           
+    | Float_L       
+    | String_L      
     | Bool_L
     | Null
     ;

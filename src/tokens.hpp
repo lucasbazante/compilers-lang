@@ -75,9 +75,10 @@ enum class Token {
 	And = 47,
 	Or = 48,
 	Comparison = 49,
+	Equals = 50,
 
 	// end of file
-	TEOF = 50,
+	TEOF = 51,
 
 	COUNT
 };
@@ -87,7 +88,6 @@ enum cmp_type {
 	Geq,
 	Greater,
 	Less,
-	Eq,
 	Neq
 };
 
@@ -107,7 +107,6 @@ inline std::ostream& operator<<(std::ostream& os, const cmp_type& cmp) {
 		case cmp_type::Geq: os << ">="; break;
 		case cmp_type::Greater: os << ">"; break;
 		case cmp_type::Less: os << "<"; break;
-		case cmp_type::Eq: os << "="; break;
 		case cmp_type::Neq: os << "<>"; break;
 	}
 
@@ -140,6 +139,7 @@ inline std::ostream& operator<<(std::ostream& os, const Token& token) {
 		case Token::And:	os << "&&"; break;
 		case Token::Or:		os << "||"; break;
 		case Token::Comparison: os << "comparison"; break;
+		case Token::Equals: os << "="; break;
 		case Token::Int_L:	os << "int_literal"; break;
 		case Token::Float_L:	os << "float literal"; break;
 		case Token::Bool_L:	os << "bool_literal"; break;

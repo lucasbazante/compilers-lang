@@ -65,7 +65,7 @@ deref { yylval = std::monostate{}; return static_cast<int>(Token::Deref); }
 
 "&&" { yylval = std::monostate{}; return static_cast<int>(Token::And); }
 "||" { yylval = std::monostate{}; return static_cast<int>(Token::Or); }
-"="  { yylval = cmp_type::Eq; return static_cast<int>(Token::Comparison); }
+"="  { yylval = std::monostate{}; return static_cast<int>(Token::Equals); }
 "<>" { yylval = cmp_type::Neq; return static_cast<int>(Token::Comparison); }
 "<=" { yylval = cmp_type::Leq; return static_cast<int>(Token::Comparison); }
 "<"  { yylval = cmp_type::Less; return static_cast<int>(Token::Comparison); }
