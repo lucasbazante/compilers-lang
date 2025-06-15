@@ -1,27 +1,20 @@
 cmake_minimum_required(VERSION 3.10)
 project(Compiler)
 
-# Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
-
-# LSP Detection
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Include headers from include/
 include_directories(include)
 
-# Find Flex and generate lexer.cpp
 find_package(FLEX REQUIRED)
-FLEX_TARGET(Lexer src/lexer.l ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
+find_package(BISON REQUIRED)
 
-add_executable(tokenizer_test
-    ${FLEX_Lexer_OUTPUTS}
-    src/tokenizer_test.cpp
-)
+# ========== Tokenizer and others ==========
+FLEX_TARGET(Lexer src/lexer.l ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
 
 add_executable(table_parser
     ${FLEX_Lexer_OUTPUTS}
-    src/parser.cpp
+    src/table_parser.cpp
 )
 
 add_executable(recursive_parser
@@ -29,6 +22,17 @@ add_executable(recursive_parser
     src/recursive_parser.cpp
 )
 
-# Include directory for both targets
-target_include_directories(tokenizer_test PRIVATE include)
 target_include_directories(table_parser PRIVATE include)
+target_include_directories(recursive_parser PRIVATE include)
+
+# ========== LR Parser ==========
+FLEX_TARGET(LRLexer src/lr_lexer.l ${CMAKE_CURRENT_BINARY_DIR}/lr_lexer.cpp)
+BISON_TARGET(LRParser src/lr_parser.yacc ${CMAKE_CURRENT_BINARY_DIR}/lr_parser.cpp
+    DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/lr_parser.hpp)
+
+add_executable(lr_parser
+    ${FLEX_LRLexer_OUTPUTS}
+    ${BISON_LRParser_OUTPUTS}
+)
+
+target_include_directories(lr_parser PRIVATE ${CMAKE_CURRENT_BINARY_DIR} include)
