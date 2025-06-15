@@ -2,34 +2,36 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "tokens.hpp"
+
 void yyerror(const char *s);
 int yylex(void);
 
 %}
 
 %define parse.error verbose
-%define api.value.type {TokenData}
 %code requires {
-    #include "lexer.hpp"
+    #include "lr_lexer.hpp"
 }
 
-%token Int 0 Float 1 Bool 2 String 3
-%token Program 4 Begin 5 In 6 End 7 Var 8 Procedure 9 Struct 10 New 11
-%token Ref 12 Deref 13 Int_L 14 Float_L 15 Bool_L 16 String_L 17 Null 18
-%token If 19 Then 20 Else 21 Fi 22 While 23 Do 24 Until 25 Od 26 For 27 To 28 Step 29 Return 30
-%token Semicolon 31 Colon 32 Assign 33 L_Paren 34 R_Paren 35 L_Bracket 36 R_Bracket 37 Comma 38
-%token Identifier 40
+%define api.value.type { TokenData }
 
-%left Or 48
-%left And 47
-%nonassoc Not 1001
-%nonassoc Comparison 49 Equals 50
-%left Plus 41 Minus 42
-%left Times 43 Divides 44
-%right Pow 45
-%left UNARYMINUS 1002
-%left Dot 39
+%token Int Float Bool String
+%token Program Begin In End Var Procedure Struct New
+%token Ref Deref Int_L Float_L Bool_L String_L Null
+%token If Then Else Fi While Do Until Od For To Step Return
+%token Semicolon Colon Assign L_Paren R_Paren L_Bracket R_Bracket Comma Dot
+%token Identifier
+%token Plus Minus Times Divides Pow
+%token And Or Not Lt Gt Leq Geq Eq Neq
+
+%left Or
+%left And
+%nonassoc Not
+%nonassoc Lt Gt Leq Geq Eq Neq
+%left Plus Minus
+%left Times Divides
+%right Pow
+%left Dot
 
 %start program
 
@@ -142,7 +144,7 @@ while_stmt:
     ;
 
 for_stmt:
-    For Identifier Equals exp To exp Step exp Do stmt_list Od
+    For Identifier Eq exp To exp Step exp Do stmt_list Od
     ;
 
 do_until_stmt:
@@ -172,7 +174,12 @@ exp:
     exp And exp
     | exp Or exp
     | Not exp
-    | exp Comparison exp
+    | exp Lt exp
+    | exp Gt exp
+    | exp Leq exp
+    | exp Geq exp
+    | exp Eq exp
+    | exp Neq exp
     | exp Plus exp
     | exp Minus exp
     | exp Divides exp
@@ -202,9 +209,9 @@ var:
     ;
 
 literal:
-    Int_L           
-    | Float_L       
-    | String_L      
+    Int_L
+    | Float_L
+    | String_L
     | Bool_L
     | Null
     ;

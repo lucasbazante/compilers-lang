@@ -3,21 +3,19 @@
 #include <unordered_map>
 #include <string>
 
-#include "tokens.hpp"
 #include <ostream>
-
 
 class SymbolTable {
 private:
-	std::unordered_map<std::string, Token> table;
+	std::unordered_map<std::string, std::string> table;
 
 public:
 
-	void insert_symbol(std::string name, Token token) {
+	void insert_symbol(std::string name, std::string token) {
 		table.insert({name, token});
 	}
 
-	Token get_symbol(std::string name) {
+	std::string get_symbol(std::string name) {
 		if (table.find(name) == table.end()) {
 			std::cerr << "No symbol with given name: [" << name << "]" << std::endl;
 			exit(EXIT_FAILURE);
