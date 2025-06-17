@@ -10,7 +10,7 @@ int yylex(void);
 
 %define parse.error verbose
 %code requires {
-    #include "lr_lexer.hpp"
+    #include "lexer.hpp"
 }
 
 %define api.value.type { TokenData }

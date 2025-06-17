@@ -1,10 +1,18 @@
 #ifndef LEXER_HPP
 #define LEXER_HPP
 
-#include "tokens.hpp"
+#include <variant>
+
 #include "symbol_table.hpp"
 
-extern TokenData yylval;
+typedef std::variant<
+  std::monostate, // nothing
+  int,		// integers
+  float,		// floats
+  std::string,	// strings and identifiers
+  bool		// booleans
+> TokenData;
+
 extern SymbolTable sb;
 extern int yylex(void);
 extern int yylineno;

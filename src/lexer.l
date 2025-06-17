@@ -1,13 +1,19 @@
+%option noyywrap
+%option yylineno
+
 %{
 	#include <string>
 	#include <stdlib.h>
+	#include <variant>
 
 	#include "lexer.hpp"
+	#include "parser.hpp"
 
 	#define YYSTYPE TokenData
 	#define YYSTYPE_IS_DECLARED 1
 
-	YYSTYPE yylval;
+	extern YYSTYPE yylval;
+
 	SymbolTable sb;
 
 	int yycolumn = 1,
@@ -17,16 +23,13 @@
 		yycolumn = prev_col;                                   \
 		for (int i = 0; i < yyleng; ++i) {                     \
 			if (yytext[i] == '\t') {                       \
-				int spaces = 8 - ((prev_col - 1) % 8); \
+				int spaces = 4 - ((prev_col - 1) % 4); \
 				prev_col += spaces;                    \
 			} else {				       \
 				prev_col += 1;			       \
 			}                                              \
 		}
 %}
-
-%option noyywrap
-%option yylineno
 
 D  [0-9]
 L  ([a-zA-Z])
@@ -37,72 +40,71 @@ L_ ([a-zA-Z]|[_])
 "//".*              { yycolumn = 1; prev_col = 1; }
 "(*"(.*(\n)?)*"*)"  { yycolumn = 1; prev_col = 1; }
 
-program   { yylval = std::monostate{}; return (int)Token::Program; }
-begin     { yylval = std::monostate{}; return (int)Token::Begin; }
-in        { yylval = std::monostate{}; return (int)Token::In; }
-end       { yylval = std::monostate{}; return (int)Token::End; }
-var       { yylval = std::monostate{}; return (int)Token::Var; }
-procedure { yylval = std::monostate{}; return (int)Token::Procedure; }
-struct    { yylval = std::monostate{}; return (int)Token::Struct; }
-new       { yylval = std::monostate{}; return (int)Token::New; }
+program   { return yytokentype::Program; }
+begin     { return yytokentype::Begin; }
+in        { return yytokentype::In; }
+end       { return yytokentype::End; }
+var       { return yytokentype::Var; }
+procedure { return yytokentype::Procedure; }
+struct    { return yytokentype::Struct; }
+new       { return yytokentype::New; }
 
-int    { yylval = std::monostate{}; return (int)Token::Int; }
-float  { yylval = std::monostate{}; return (int)Token::Float; }
-bool   { yylval = std::monostate{}; return (int)Token::Bool; }
-string { yylval = std::monostate{}; return (int)Token::String; }
+int    { return yytokentype::Int; }
+float  { return yytokentype::Float; }
+bool   { return yytokentype::Bool; }
+string { return yytokentype::String; }
 
-ref   { yylval = std::monostate{}; return (int)Token::Ref; }
-deref { yylval = std::monostate{}; return (int)Token::Deref; }
+ref   { return yytokentype::Ref; }
+deref { return yytokentype::Deref; }
 
-"+" { yylval = std::monostate{}; return (int)Token::Plus; }
-"-" { yylval = std::monostate{}; return (int)Token::Minus; }
-"*" { yylval = std::monostate{}; return (int)Token::Times; }
-"/" { yylval = std::monostate{}; return (int)Token::Divides; }
-"^" { yylval = std::monostate{}; return (int)Token::Pow; }
-"%" { yylval = std::monostate{}; return (int)Token::Modulo; }
+"+" { return yytokentype::Plus; }
+"-" { return yytokentype::Minus; }
+"*" { return yytokentype::Times; }
+"/" { return yytokentype::Divides; }
+"^" { return yytokentype::Pow; }
 
-"&&" { yylval = std::monostate{}; return (int)Token::And; }
-"||" { yylval = std::monostate{}; return (int)Token::Or; }
-"="  { yylval = cmp_type::Eq; return (int)Token::Comparison; }
-"<>" { yylval = cmp_type::Neq; return (int)Token::Comparison; }
-"<=" { yylval = cmp_type::Leq; return (int)Token::Comparison; }
-"<"  { yylval = cmp_type::Less; return (int)Token::Comparison; }
-">=" { yylval = cmp_type::Geq; return (int)Token::Comparison; }
-">"  { yylval = cmp_type::Greater; return (int)Token::Comparison; }
+"&&"  { return yytokentype::And; }
+"||"  { return yytokentype::Or; }
+"not" { return yytokentype::Not; }
+"="   { return yytokentype::Eq; }
+"<>"  { return yytokentype::Neq; }
+"<="  { return yytokentype::Leq; }
+"<"   { return yytokentype::Lt; }
+">="  { return yytokentype::Geq; }
+">"   { return yytokentype::Gt; }
 
-if     { yylval = std::monostate{}; return (int)Token::If; }
-then   { yylval = std::monostate{}; return (int)Token::Then; }
-else   { yylval = std::monostate{}; return (int)Token::Else; }
-fi     { yylval = std::monostate{}; return (int)Token::Fi; }
-while  { yylval = std::monostate{}; return (int)Token::While; }
-do     { yylval = std::monostate{}; return (int)Token::Do; }
-until  { yylval = std::monostate{}; return (int)Token::Until; }
-od     { yylval = std::monostate{}; return (int)Token::Od; }
-for    { yylval = std::monostate{}; return (int)Token::For; }
-to     { yylval = std::monostate{}; return (int)Token::To; }
-step   { yylval = std::monostate{}; return (int)Token::Step; }
-return { yylval = std::monostate{}; return (int)Token::Return; }
+if     { return yytokentype::If; }
+then   { return yytokentype::Then; }
+else   { return yytokentype::Else; }
+fi     { return yytokentype::Fi; }
+while  { return yytokentype::While; }
+do     { return yytokentype::Do; }
+until  { return yytokentype::Until; }
+od     { return yytokentype::Od; }
+for    { return yytokentype::For; }
+to     { return yytokentype::To; }
+step   { return yytokentype::Step; }
+return { return yytokentype::Return; }
 
-";"  { yylval = std::monostate{}; return (int)Token::Semicolon; }
-":"  { yylval = std::monostate{}; return (int)Token::Colon; }
-":=" { yylval = std::monostate{}; return (int)Token::Assign; }
-"("  { yylval = std::monostate{}; return (int)Token::L_Paren; }
-")"  { yylval = std::monostate{}; return (int)Token::R_Paren; }
-"{"  { yylval = std::monostate{}; return (int)Token::L_Bracket; }
-"}"  { yylval = std::monostate{}; return (int)Token::R_Bracket; }
-"."  { yylval = std::monostate{}; return (int)Token::Dot; }
-","  { yylval = std::monostate{}; return (int)Token::Comma; }
+";"  { return yytokentype::Semicolon; }
+":"  { return yytokentype::Colon; }
+":=" { return yytokentype::Assign; }
+"("  { return yytokentype::L_Paren; }
+")"  { return yytokentype::R_Paren; }
+"{"  { return yytokentype::L_Bracket; }
+"}"  { return yytokentype::R_Bracket; }
+"."  { return yytokentype::Dot; }
+","  { return yytokentype::Comma; }
 
-{D}+			    { yylval = std::stoi(yytext); return (int)Token::Int_L; }
-({D}+"."{D}+)(e[+-]{D}{D})? { yylval = std::stof(yytext); return (int)Token::Float_L; }
-\".\"			    { yylval = yytext; return (int)Token::String_L; }
-true|false		    { yylval = yytext == "true" ? true : false; return (int)Token::Bool_L; }
-null			    { yylval = std::monostate{}; return (int)Token::Null; }
+{D}+			    { yylval = std::stoi(yytext); return yytokentype::Int_L; }
+({D}+"."{D}+)(e[+-]{D}{D})? { yylval = std::stof(yytext); return yytokentype::Float_L; }
+\".\"			    { yylval = yytext; return yytokentype::String_L; }
+true|false		    { yylval = yytext == "true" ? true : false; return yytokentype::Bool_L; }
+null			    { return yytokentype::Null; }
 
-{L}({L_}|{D})* { yylval = yytext; sb.insert_symbol(yytext, Token::Identifier); return (int)Token::Identifier; }
+{L}({L_}|{D})* { yylval = yytext; sb.insert_symbol(yytext, yytext); return yytokentype::Identifier; }
 
 \n        { yycolumn = 1; prev_col = 1; }
 .	  { }
-<<EOF>>   { return (int)Token::TEOF; }
 
 %%
