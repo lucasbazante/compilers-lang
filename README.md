@@ -1,33 +1,23 @@
 # A simple compiler
 
-This repository contains the implementation of a simple compiler, built as a project for the Compilers class.
+This repository contains the implementation of a simple compiler, built as a project for the Compilers (DIM0164) class.
 
-## Build project
+## Building the project
 
-With CMake, we do:
+With CMake, from the root of the project, we do:
 ```sh
 cmake -S . -B build
 cmake --build build
 ```
 
-## Running compiler
-To run recursive parser, first create a sample code of the language in some `file.txt`, then run:
+## Running the compiler
+If you want to run/inspect the descendent syntactic analysis, please refer to the [alternative branch/version][https://github.com/lucasbazante/compilers-lang/tree/descendent_syntactic_analysis] of this project and follow the instructions.
+
+To run the Bison parser, assuming that `file` is a sample code of the parsed language, simply do:
 
 ```sh
-./build/recursive_parser < file.txt
-```
-
-To run the table parser, using the same sample code, run:
-
-```sh
-./build/table_parser < file.txt
+./build/parser < file
 ```
 
 ## Examples
-Some examples of programs can be found in `examples` folder. 
-You can run the compilers in all examples with the `test` script
-
-Usage:
-```sh
-./test 
-```
+Some examples of programs can be found in `examples` folder.
