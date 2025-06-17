@@ -11,7 +11,7 @@ cmake --build build
 ```
 
 ## Running the compiler
-If you want to run/inspect the descendent syntactic analysis, please refer to the [alternative branch/version][https://github.com/lucasbazante/compilers-lang/tree/descendent_syntactic_analysis] of this project and follow the instructions.
+If you want to run/inspect the descendent syntactic analysis, please refer to the [alternative branch/version](https://github.com/lucasbazante/compilers-lang/tree/descendent_syntactic_analysis) of this project and follow the instructions.
 
 To run the Bison parser, assuming that `file` is a sample code of the parsed language, simply do:
 
