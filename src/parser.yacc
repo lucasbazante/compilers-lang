@@ -44,7 +44,12 @@ SymbolTable symtab;
 %left Dot
 
 %type <action> var_decl
+%type <action> rec_decl
 %type <action> exp
+%type <action> var
+%type <action> paramfield_decl
+%type <action> paramfield_decl_list
+%type <action> paramfield_decl_list_opt
 %type <type> type
 %type <type> literal
 
@@ -76,9 +81,16 @@ decl:
     | rec_decl
     ;
 
-var_decl: Var Identifier Colon type { $$ = new VarDecl(&symtab, *$2, *$4); }
-    | Var Identifier Colon type Assign exp { $$ = new VarDecl(&symtab, *$2, *$4); }
-    | Var Identifier Assign exp { $$ = new VarDecl(); }
+var_decl:
+    Var Identifier Colon type { $$ = new VarDecl(&symtab, *$2, *$4); }
+    | Var Identifier Colon type Assign exp {
+        auto actual_type = *static_cast<Expression*>($6)->type;
+        $$ = new VarDecl(&symtab, *$2, *$4, actual_type);
+      }
+    | Var Identifier Assign exp {
+        auto exp_type = *static_cast<Expression*>($4)->type;
+        $$ = new VarDecl(&symtab, *$2, exp_type);
+      }
     ;
 
 proc_decl:
@@ -100,17 +112,27 @@ decl_block:
     ;
 
 rec_decl:
-    Struct Identifier L_Bracket paramfield_decl_list_opt R_Bracket
+    Struct Identifier L_Bracket paramfield_decl_list_opt R_Bracket {
+        $$ = new StructDecl(&symtab, *$2, static_cast<ParameterField*>($4));
+    }
     ;
 
 paramfield_decl_list_opt:
-    /* empty */
-    | paramfield_decl_list
+    /* empty */ { $$ = new ParameterField(); }
+    | paramfield_decl_list { $$ = $1; }
     ;
 
 paramfield_decl_list:
-    paramfield_decl
-    | paramfield_decl_list Semicolon paramfield_decl
+    paramfield_decl {
+        auto list = new ParameterField();
+        list->add(static_cast<ParameterDecl*>($1));
+        $$ = list;
+      }
+    | paramfield_decl_list Semicolon paramfield_decl {
+        auto list = static_cast<ParameterField*>($1);
+        list->add(static_cast<ParameterDecl*>($3));
+        $$ = list;
+      }
     ;
 
 paramfield_list_opt:
@@ -124,7 +146,7 @@ paramfield_list:
     ;
 
 paramfield_decl:
-    Identifier Colon type
+    Identifier Colon type { $$ = new ParameterDecl(*$1, $3); }
     ;
 
 stmt_list:
@@ -187,7 +209,6 @@ exp_list:
     exp
     | exp_list Comma exp
     ;
-
 
 exp:
     exp And exp {
@@ -261,16 +282,16 @@ exp:
       }
     | literal             { $$ = new Expression($1); }
     | call_stmt           { $$ = new Expression(); }
-    | New Identifier      { $$ = new Expression(); }
-    | var                 { $$ = new Expression(); }
+    | New Identifier      { $$ = new Expression(&symtab, *$2); }
+    | var                 { auto v_type = static_cast<Variable*>($1); $$ = new Expression(v_type->type); }
     | ref_var             { $$ = new Expression(); }
     | deref_var           { $$ = new Expression(); }
     | L_Paren exp R_Paren { $$ = static_cast<Expression*>($2); }
     ;
 
 var:
-    Identifier
-    | exp Dot Identifier
+    Identifier           { $$ = new Variable(&symtab, *$1); }
+    | exp Dot Identifier { $$ = new Variable(&symtab, static_cast<Expression*>($1), *$3); }
     ;
 
 ref_var:
@@ -283,7 +304,7 @@ deref_var:
     ;
 
 literal:
-    Int_L      { $$ = new TypeInfo(BaseType::FLOAT); }
+    Int_L      { $$ = new TypeInfo(BaseType::INT); }
     | Float_L  { $$ = new TypeInfo(BaseType::FLOAT); }
     | String_L { $$ = new TypeInfo(BaseType::STRING); }
     | Bool_L   { $$ = new TypeInfo(BaseType::BOOL); }

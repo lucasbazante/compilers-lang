@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <cstdlib>
 #include <memory>
 #include <unordered_map>
@@ -8,12 +9,34 @@
 #include <vector>
 
 enum class BaseType {
-	FLOAT, INT, STRING, BOOL, STRUCT, REFERENCE
+	FLOAT, INT, STRING, BOOL, STRUCT, REFERENCE, NONE
 };
+
+inline std::ostream& operator<<(std::ostream& os, BaseType type) {
+    switch (type) {
+        case BaseType::FLOAT: return os << "float";
+        case BaseType::INT: return os << "int";
+        case BaseType::STRING: return os << "string";
+        case BaseType::BOOL: return os << "bool";
+        case BaseType::STRUCT: return os << "struct";
+        case BaseType::REFERENCE: return os << "reference";
+        default: return os << "error";
+    }
+}
 
 enum class SymbolKind {
 	VARIABLE, FUNCTION, PARAMETER, STRUCT
 };
+
+inline std::ostream& operator<<(std::ostream& os, SymbolKind kind) {
+    switch (kind) {
+        case SymbolKind::VARIABLE: return os << "variable";
+        case SymbolKind::FUNCTION: return os << "function";
+        case SymbolKind::PARAMETER: return os << "parameter";
+        case SymbolKind::STRUCT: return os << "struct";
+        default: return os << "unknown";
+    }
+}
 
 struct TypeInfo {
 	BaseType type;
@@ -38,7 +61,7 @@ struct Symbol {
 	SymbolKind kind;
 	TypeInfo type;
 
-	std::vector<TypeInfo> parameters;
+	std::vector<std::pair<std::string, TypeInfo>> parameters;
 
 	Symbol(std::string name, SymbolKind kind, TypeInfo type)
 		: name(name), kind(kind), type(type)

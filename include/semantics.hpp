@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstdlib>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include "symbol_table.hpp"
 
@@ -13,8 +15,14 @@ public:
 class Program : public SemanticAction {
 };
 
+// ---- DECLARATIONS ----
+
 class VarDecl : public SemanticAction {
 public:
+  /*
+   * Just a declaration, no expression.
+   * Or it could be the case of a type inference.
+  */
   VarDecl(SymbolTable* sb, std::string name, TypeInfo type) {
     Symbol sym(name, SymbolKind::VARIABLE, type);
 
@@ -25,10 +33,72 @@ public:
     this->type_ok = true;
   }
 
-  VarDecl() {
+  /*
+   * Declaration and expression as value, must type-check.
+  */
+  VarDecl(SymbolTable* sb, std::string name, TypeInfo decl_type, TypeInfo actual_type) {
+    if (decl_type.type != actual_type.type) {
+      std::cout << "Expected " << decl_type.type << ", received " << actual_type.type << "." << std::endl;
+      this->type_ok = false;
+    }
 
+    Symbol sym(name, SymbolKind::VARIABLE, decl_type);
+
+    if (not sb->insert(sym)) {
+      std::cout << "Symbol " << name << " is already declared.\n";
+    }
+
+    this->type_ok = true;
   }
 };
+
+class ParameterDecl : public SemanticAction {
+public:
+  std::string name;
+  TypeInfo* type;
+
+  ParameterDecl(std::string name, TypeInfo* type)
+    : name(name), type(type)
+  {}
+};
+
+class ParameterField : public SemanticAction {
+public:
+  std::vector<ParameterDecl*> fields;
+
+  ParameterField() = default;
+  
+  void add(ParameterDecl* param) {
+    fields.push_back(param);
+  }
+
+  ~ParameterField() {
+    for (auto f : fields) delete f;
+  }
+};
+
+class StructDecl : public SemanticAction {
+public:
+  std::string name;
+  ParameterField* fields;
+
+  StructDecl(SymbolTable* symtab, std::string name, ParameterField* fields) {
+    TypeInfo struct_type(BaseType::STRUCT, name);
+
+    Symbol symbol(name, SymbolKind::STRUCT, struct_type);
+
+    for (const auto& field : fields->fields) {
+      symbol.parameters.push_back({field->name, *field->type});
+    }
+
+    if (not symtab->insert(symbol)) {
+      std::cerr << "Error: Struct `" << name << "` is already defined.\n";
+      std::exit(1);
+    }
+  }
+};
+
+// ---- Expressions ----
 
 class Expression : public SemanticAction {
 public:
@@ -46,6 +116,20 @@ public:
   Expression(TypeInfo* type)
     : type(type) {
     this->type_ok = true;
+  }
+
+  /*
+   * Defining struct with `new name`.
+   */
+  Expression(SymbolTable* symtab, std::string name) {
+    Symbol* sym = symtab->lookup(name);
+    
+    if (sym == nullptr) {
+      std::cerr << "Invalid struct instantiation: `" << name << "` is not a declared struct in this scope.";
+      std::exit(1);
+    }
+
+    this->type = new TypeInfo(BaseType::STRUCT, name);
   }
 
   // Unary: NOT
@@ -146,6 +230,49 @@ private:
   }
 };
 
-class Var : public SemanticAction {
+class Variable : public SemanticAction {
+public:
   TypeInfo* type;
+
+  Variable(SymbolTable* symtab, std::string name) {
+    Symbol* sym = symtab->lookup(name);
+
+    if (sym == nullptr) {
+      std::cerr << "Name not found." << std::endl;
+      this->type = new TypeInfo(BaseType::NONE);
+      return;
+    }
+
+    this->type = &sym->type;
+  }
+
+  /*
+  * Handling the case of accessing a field from a struct.
+  * The struct may come by an expression, so we receive it.
+  */
+  Variable(SymbolTable* symtab, Expression* exp, std::string name) {
+    if (exp->type->type != BaseType::STRUCT) {
+      std::cerr << "Trying to use dot notation on a non-struct object." << std::endl;
+      std::exit(1);
+    }
+    
+    Symbol* sym = symtab->lookup(exp->type->struct_name);
+
+    if (sym == nullptr) {
+      std::cerr << "Name not found." << std::endl;
+      this->type = new TypeInfo(BaseType::NONE);
+      return;
+    }
+
+    for (auto field : sym->parameters) {
+      if (name == field.first) {
+        this->type_ok = true;
+        this->type = &sym->type;
+        return;
+      }
+    }
+
+    std::cerr << "Invalid access to struct field: non-existent field `" << name << "`" << std::endl;
+    std::exit(1);
+  }
 };
