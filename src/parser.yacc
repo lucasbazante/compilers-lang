@@ -42,6 +42,7 @@ SymbolTable symtab;
 %left Times Divides
 %right Pow
 %left Dot
+%left UMINUS
 
 %type <action> var_decl
 %type <action> rec_decl
@@ -254,6 +255,9 @@ exp:
           auto lhs = static_cast<Expression*>($1);
           auto rhs = static_cast<Expression*>($3);
           $$ = new Expression(lhs->type, Expression::Operator::NEQ, rhs->type);
+      }
+    | Minus exp %prec UMINUS {
+        $$ = new Expression(BaseType::INT);
       }
     | exp Plus exp {
           auto lhs = static_cast<Expression*>($1);
