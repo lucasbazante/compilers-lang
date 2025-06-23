@@ -27,8 +27,9 @@ public:
     Symbol sym(name, SymbolKind::VARIABLE, type);
 
     if (not sb->insert(sym)) {
-      std::cout << "Symbol " << name << " is already declared.\n";
+      std::cout << "[ERROR] Symbol " << name << " is already declared.\n";
     }
+
 
     this->type_ok = true;
   }
@@ -111,6 +112,9 @@ public:
   };
 
   Expression() {}
+
+    Expression(BaseType t)
+    { this->type = new TypeInfo(t);}
 
   // literal
   Expression(TypeInfo* type)
