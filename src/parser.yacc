@@ -2,25 +2,35 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
+
+#include "lexer.hpp"
+#include "symbol_table.hpp"
 
 void yyerror(const char *s);
 int yylex(void);
+
+SymbolTable symtab;
 
 %}
 
 %define parse.error verbose
 %code requires {
-    #include "lexer.hpp"
+    #include "semantics.hpp"
 }
 
-%define api.value.type { TokenData }
+%union {
+    SemanticAction* action;
+    std::string* name;
+    TypeInfo* type;
+}
 
 %token Int Float Bool String
 %token Program Begin In End Var Procedure Struct New
 %token Ref Deref Int_L Float_L Bool_L String_L Null
 %token If Then Else Fi While Do Until Od For To Step Return
 %token Semicolon Colon Assign L_Paren R_Paren L_Bracket R_Bracket Comma Dot
-%token Identifier
+%token <name> Identifier
 %token Plus Minus Times Divides Pow
 %token And Or Not Lt Gt Leq Geq Eq Neq
 
@@ -33,12 +43,26 @@ int yylex(void);
 %right Pow
 %left Dot
 
+%type <action> var_decl
+%type <action> rec_decl
+%type <action> exp
+%type <action> var
+%type <action> paramfield_decl
+%type <action> paramfield_decl_list
+%type <action> paramfield_decl_list_opt
+%type <type> type
+%type <type> literal
+
 %start program
 
 %%
 
 program:
-    Program Identifier Begin decl_list_opt End
+    Program Identifier Begin {
+        symtab = SymbolTable();
+    } decl_list_opt End {
+        symtab.pop();
+    }
     ;
 
 decl_list_opt:
@@ -58,9 +82,15 @@ decl:
     ;
 
 var_decl:
-    Var Identifier Colon type
-    | Var Identifier Colon type Assign exp
-    | Var Identifier Assign exp
+    Var Identifier Colon type { $$ = new VarDecl(&symtab, *$2, *$4); }
+    | Var Identifier Colon type Assign exp {
+        auto actual_type = *static_cast<Expression*>($6)->type;
+        $$ = new VarDecl(&symtab, *$2, *$4, actual_type);
+      }
+    | Var Identifier Assign exp {
+        auto exp_type = *static_cast<Expression*>($4)->type;
+        $$ = new VarDecl(&symtab, *$2, exp_type);
+      }
     ;
 
 proc_decl:
@@ -82,17 +112,27 @@ decl_block:
     ;
 
 rec_decl:
-    Struct Identifier L_Bracket paramfield_decl_list_opt R_Bracket
+    Struct Identifier L_Bracket paramfield_decl_list_opt R_Bracket {
+        $$ = new StructDecl(&symtab, *$2, static_cast<ParameterField*>($4));
+    }
     ;
 
 paramfield_decl_list_opt:
-    /* empty */
-    | paramfield_decl_list
+    /* empty */ { $$ = new ParameterField(); }
+    | paramfield_decl_list { $$ = $1; }
     ;
 
 paramfield_decl_list:
-    paramfield_decl
-    | paramfield_decl_list Semicolon paramfield_decl
+    paramfield_decl {
+        auto list = new ParameterField();
+        list->add(static_cast<ParameterDecl*>($1));
+        $$ = list;
+      }
+    | paramfield_decl_list Semicolon paramfield_decl {
+        auto list = static_cast<ParameterField*>($1);
+        list->add(static_cast<ParameterDecl*>($3));
+        $$ = list;
+      }
     ;
 
 paramfield_list_opt:
@@ -106,7 +146,7 @@ paramfield_list:
     ;
 
 paramfield_decl:
-    Identifier Colon type
+    Identifier Colon type { $$ = new ParameterDecl(*$1, $3); }
     ;
 
 stmt_list:
@@ -171,27 +211,87 @@ exp_list:
     ;
 
 exp:
-    exp And exp
-    | exp Or exp
-    | Not exp
-    | exp Lt exp
-    | exp Gt exp
-    | exp Leq exp
-    | exp Geq exp
-    | exp Eq exp
-    | exp Neq exp
-    | exp Plus exp
-    | exp Minus exp
-    | exp Divides exp
-    | exp Times exp
-    | exp Pow exp
-    | literal
-    | call_stmt
-    | New Identifier
-    | var
-    | ref_var
-    | deref_var
-    | L_Paren exp R_Paren
+    exp And exp {
+          auto lhs = static_cast<Expression*>($1);
+          auto rhs = static_cast<Expression*>($3);
+          $$ = new Expression(lhs->type, Expression::Operator::AND, rhs->type);
+      }
+    | exp Or exp {
+          auto lhs = static_cast<Expression*>($1);
+          auto rhs = static_cast<Expression*>($3);
+          $$ = new Expression(lhs->type, Expression::Operator::OR, rhs->type);
+      }
+    | Not exp {
+          auto expr = static_cast<Expression*>($2);
+          $$ = new Expression(Expression::Operator::NOT, expr->type);
+      }
+    | exp Lt exp {
+          auto lhs = static_cast<Expression*>($1);
+          auto rhs = static_cast<Expression*>($3);
+          $$ = new Expression(lhs->type, Expression::Operator::LT, rhs->type);
+      }
+    | exp Gt exp {
+          auto lhs = static_cast<Expression*>($1);
+          auto rhs = static_cast<Expression*>($3);
+          $$ = new Expression(lhs->type, Expression::Operator::GT, rhs->type);
+      }
+    | exp Leq exp {
+          auto lhs = static_cast<Expression*>($1);
+          auto rhs = static_cast<Expression*>($3);
+          $$ = new Expression(lhs->type, Expression::Operator::LEQ, rhs->type);
+      }
+    | exp Geq exp {
+          auto lhs = static_cast<Expression*>($1);
+          auto rhs = static_cast<Expression*>($3);
+          $$ = new Expression(lhs->type, Expression::Operator::GEQ, rhs->type);
+      }
+    | exp Eq exp {
+          auto lhs = static_cast<Expression*>($1);
+          auto rhs = static_cast<Expression*>($3);
+          $$ = new Expression(lhs->type, Expression::Operator::EQ, rhs->type);
+      }
+    | exp Neq exp {
+          auto lhs = static_cast<Expression*>($1);
+          auto rhs = static_cast<Expression*>($3);
+          $$ = new Expression(lhs->type, Expression::Operator::NEQ, rhs->type);
+      }
+    | exp Plus exp {
+          auto lhs = static_cast<Expression*>($1);
+          auto rhs = static_cast<Expression*>($3);
+          $$ = new Expression(lhs->type, Expression::Operator::PLUS, rhs->type);
+      }
+    | exp Minus exp {
+          auto lhs = static_cast<Expression*>($1);
+          auto rhs = static_cast<Expression*>($3);
+          $$ = new Expression(lhs->type, Expression::Operator::MINUS, rhs->type);
+      }
+    | exp Divides exp {
+          auto lhs = static_cast<Expression*>($1);
+          auto rhs = static_cast<Expression*>($3);
+          $$ = new Expression(lhs->type, Expression::Operator::DIVIDES, rhs->type);
+      }
+    | exp Times exp {
+          auto lhs = static_cast<Expression*>($1);
+          auto rhs = static_cast<Expression*>($3);
+          $$ = new Expression(lhs->type, Expression::Operator::TIMES, rhs->type);
+      }
+    | exp Pow exp {
+          auto lhs = static_cast<Expression*>($1);
+          auto rhs = static_cast<Expression*>($3);
+          $$ = new Expression(lhs->type, Expression::Operator::POW, rhs->type);
+      }
+    | literal             { $$ = new Expression($1); }
+    | call_stmt           { $$ = new Expression(); }
+    | New Identifier      { $$ = new Expression(&symtab, *$2); }
+    | var                 { auto v_type = static_cast<Variable*>($1); $$ = new Expression(v_type->type); }
+    | ref_var             { $$ = new Expression(); }
+    | deref_var           { $$ = new Expression(); }
+    | L_Paren exp R_Paren { $$ = static_cast<Expression*>($2); }
+    ;
+
+var:
+    Identifier           { $$ = new Variable(&symtab, *$1); }
+    | exp Dot Identifier { $$ = new Variable(&symtab, static_cast<Expression*>($1), *$3); }
     ;
 
 ref_var:
@@ -203,26 +303,21 @@ deref_var:
     | Deref L_Paren deref_var R_Paren
     ;
 
-var:
-    Identifier
-    | exp Dot Identifier
-    ;
-
 literal:
-    Int_L
-    | Float_L
-    | String_L
-    | Bool_L
-    | Null
+    Int_L      { $$ = new TypeInfo(BaseType::INT); }
+    | Float_L  { $$ = new TypeInfo(BaseType::FLOAT); }
+    | String_L { $$ = new TypeInfo(BaseType::STRING); }
+    | Bool_L   { $$ = new TypeInfo(BaseType::BOOL); }
+    | Null     { $$ = new TypeInfo(BaseType::REFERENCE); }
     ;
 
 type:
-    Int
-    | Float
-    | String
-    | Bool
-    | Identifier
-    | Ref L_Paren type R_Paren
+    Int                        { $$ = new TypeInfo(BaseType::INT); }
+    | Float                    { $$ = new TypeInfo(BaseType::FLOAT); }
+    | String                   { $$ = new TypeInfo(BaseType::STRING); }
+    | Bool                     { $$ = new TypeInfo(BaseType::BOOL); }
+    | Identifier               { $$ = new TypeInfo(BaseType::STRUCT, *$1); }
+    | Ref L_Paren type R_Paren { $$ = new TypeInfo(BaseType::REFERENCE, *$3); }
     ;
 
 return_type_opt:

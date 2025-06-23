@@ -1,0 +1,12 @@
+program example
+begin
+    var i : int := 1;
+    var j : float := i + 5.0;
+    struct test {
+        x : int;
+        y : float
+    };
+
+    var t := new test;
+    var a := t.w
+end

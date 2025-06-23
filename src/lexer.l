@@ -2,19 +2,15 @@
 %option yylineno
 
 %{
-	#include <string>
 	#include <stdlib.h>
-	#include <variant>
 
 	#include "lexer.hpp"
 	#include "parser.hpp"
 
-	#define YYSTYPE TokenData
-	#define YYSTYPE_IS_DECLARED 1
+	// #define YYSTYPE TokenData
+	// #define YYSTYPE_IS_DECLARED 1
 
-	extern YYSTYPE yylval;
-
-	SymbolTable sb;
+	// extern YYSTYPE yylval;
 
 	int yycolumn = 1,
 	    prev_col = 1;
@@ -96,13 +92,13 @@ return { return yytokentype::Return; }
 "."  { return yytokentype::Dot; }
 ","  { return yytokentype::Comma; }
 
-{D}+			    { yylval = std::stoi(yytext); return yytokentype::Int_L; }
-({D}+"."{D}+)(e[+-]{D}{D})? { yylval = std::stof(yytext); return yytokentype::Float_L; }
-\".\"			    { yylval = yytext; return yytokentype::String_L; }
-true|false		    { yylval = yytext == "true" ? true : false; return yytokentype::Bool_L; }
+{D}+			    { return yytokentype::Int_L; }
+({D}+"."{D}+)(e[+-]{D}{D})? { return yytokentype::Float_L; }
+\".\"			    { return yytokentype::String_L; }
+true|false		    { return yytokentype::Bool_L; }
 null			    { return yytokentype::Null; }
 
-{L}({L_}|{D})* { yylval = yytext; sb.insert_symbol(yytext, yytext); return yytokentype::Identifier; }
+{L}({L_}|{D})* { yylval.name = new std::string(yytext); return yytokentype::Identifier; }
 
 \n        { yycolumn = 1; prev_col = 1; }
 .	  { }

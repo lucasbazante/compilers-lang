@@ -1,9 +1,8 @@
 #ifndef LEXER_HPP
 #define LEXER_HPP
 
+#include <string>
 #include <variant>
-
-#include "symbol_table.hpp"
 
 typedef std::variant<
   std::monostate, // nothing
@@ -13,7 +12,6 @@ typedef std::variant<
   bool		// booleans
 > TokenData;
 
-extern SymbolTable sb;
 extern int yylex(void);
 extern int yylineno;
 extern int yycolumn;
