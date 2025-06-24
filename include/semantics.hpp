@@ -504,11 +504,11 @@ public:
 class AssignStatement : public SemanticAction {
 public:
   AssignStatement(Variable* var, Expression* exp) {
-    if (var->type != exp->type) {
+    if (*var->type != *exp->type) {
       std::cerr << "[ERROR] Type error on assignment: expected `"
-                << var->type
+                << *var->type
                 << "`, got `"
-                << exp->type
+                << *exp->type
                 << "`.\n";
       this->type_ok = false;
       return;
@@ -520,9 +520,9 @@ public:
   AssignStatement(Dereference* deref, Expression* exp) {
     if (deref->type != exp->type) {
       std::cerr << "[ERROR] Type error on assignment: expected `"
-                << deref->type
+                << *deref->type
                 << "`, got `"
-                << exp->type
+                << *exp->type
                 << "`.\n";
       this->type_ok = false;
       return;

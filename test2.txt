@@ -5,11 +5,14 @@ begin
 	procedure main ()
 	begin
 		var b : bool := false;
+		var d : int;
 		struct slaoq {
-			x : bool
-
+			x : int
 		};
-		var a : bool := slaoq.x
+		var a := ref(b);
+		var c : ref(bool) := a + 1
 	in
+		d := 1
 	end
 end
+
