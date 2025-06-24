@@ -104,9 +104,9 @@ null			    { return yytokentype::Null; }
 [ \t\r\b]+ { }
 \n	   { yycolumn = 1; prev_col = 1; }
 
-. { char c = yytext[0];\
+. { char c = yytext[0];
     if (isprint(c)) {
-	std::cerr << "Lexical error: invalid character '" << c 
+	std::cerr << "Lexical error: invalid character '" << c
 		  << "' at line " << yylineno
 		  << ", column " << yycolumn
 		  << ".\n";
@@ -116,7 +116,7 @@ null			    { return yytokentype::Null; }
 		  << ") at line " << yylineno
 		  << ", column " << yycolumn
 		  << ".\n";
-    }
-}
+    }
+  }
 
 %%
