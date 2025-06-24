@@ -48,6 +48,8 @@ SymbolTable symtab;
 %type <action> rec_decl
 %type <action> exp
 %type <action> var
+%type <action> ref_var
+%type <action> deref_var
 %type <action> paramfield_decl
 %type <action> paramfield_decl_list
 %type <action> paramfield_decl_list_opt
@@ -287,9 +289,9 @@ exp:
     | literal             { $$ = new Expression($1); }
     | call_stmt           { $$ = new Expression(); }
     | New Identifier      { $$ = new Expression(&symtab, *$2); }
-    | var                 { auto v_type = static_cast<Variable*>($1); $$ = new Expression(v_type->type); }
-    | ref_var             { $$ = new Expression(); }
-    | deref_var           { $$ = new Expression(); }
+    | var                 { auto v = static_cast<Variable*>($1); $$ = new Expression(v->type); }
+    | ref_var             { auto ref = static_cast<Reference*>($1); $$ = new Expression(ref->type); }
+    | deref_var           { auto deref = static_cast<Dereference*>($1); $$ = new Expression(deref->type); }
     | L_Paren exp R_Paren { $$ = static_cast<Expression*>($2); }
     ;
 
@@ -299,12 +301,18 @@ var:
     ;
 
 ref_var:
-    Ref L_Paren var R_Paren
+    Ref L_Paren var R_Paren { $$ = new Reference(static_cast<Variable*>($3)->type); }
     ;
 
 deref_var:
-    Deref L_Paren var R_Paren
-    | Deref L_Paren deref_var R_Paren
+    Deref L_Paren var R_Paren {
+        auto v = static_cast<Variable*>($3);
+        $$ = new Dereference(v->type);
+      }
+    | Deref L_Paren deref_var R_Paren {
+        auto deref = static_cast<Dereference*>($3);
+        $$ = new Dereference(deref->type);
+    }
     ;
 
 literal:

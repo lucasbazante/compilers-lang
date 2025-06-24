@@ -1,4 +1,8 @@
 program example
 begin
-    var i : int := -1 + 5
+    var i : int := -1 + 5;
+    var j : ref(int) := ref(i);
+    var k : ref(ref(int)) := ref(j);
+
+    var x : int := deref(deref(k)) + 5
 end

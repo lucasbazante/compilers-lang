@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <typeinfo>
 #include <vector>
 
 #include "symbol_table.hpp"
@@ -23,33 +24,54 @@ public:
    * Just a declaration, no expression.
    * Or it could be the case of a type inference.
   */
-  VarDecl(SymbolTable* sb, std::string name, TypeInfo type) {
-    Symbol sym(name, SymbolKind::VARIABLE, type);
+  VarDecl(SymbolTable* sb, std::string name, TypeInfo decl_type) {
+    this->type_ok = true;
 
-    if (not sb->insert(sym)) {
-      std::cout << "[ERROR] Symbol " << name << " is already declared.\n";
+    // Checking if type exists.
+    if (not decl_type.struct_name.empty() and not sb->lookup(decl_type.struct_name)) {
+        std::cout << "[ERROR] ´" << decl_type.struct_name << "´ is not a type.\n";
+        this->type_ok = false;
+        decl_type.b_type = BaseType::NONE;
     }
 
+    Symbol sym(name, SymbolKind::VARIABLE, decl_type);
 
-    this->type_ok = true;
+    // Redeclaration under same scope.
+    if (not sb->insert(sym)) {
+      std::cout << "[ERROR] Symbol ´" << name << "´ is already declared.\n";
+      this->type_ok = false;
+    }
   }
 
   /*
    * Declaration and expression as value, must type-check.
   */
   VarDecl(SymbolTable* sb, std::string name, TypeInfo decl_type, TypeInfo actual_type) {
-    if (decl_type.type != actual_type.type) {
-      std::cout << "Expected " << decl_type.type << ", received " << actual_type.type << "." << std::endl;
+    this->type_ok = true;
+
+    // Checking if type exists
+    if (not decl_type.struct_name.empty() and not sb->lookup(decl_type.struct_name)) {
+        std::cout << "[ERROR] ´" << decl_type.struct_name << "´ is not a type.\n";
+        this->type_ok = false;
+        decl_type.b_type = BaseType::NONE;
+    }
+
+    if (decl_type.b_type != BaseType::NONE and decl_type != actual_type) {
+      std::cout << "[ERROR] Expected ´"
+                << decl_type
+                << "´, received ´"
+                << actual_type
+                << "´.\n";
+
       this->type_ok = false;
     }
 
     Symbol sym(name, SymbolKind::VARIABLE, decl_type);
 
     if (not sb->insert(sym)) {
-      std::cout << "Symbol " << name << " is already declared.\n";
+      std::cout << "[ERROR] Symbol ´" << name << "´ is already declared.\n";
+      this->type_ok = false;
     }
-
-    this->type_ok = true;
   }
 };
 
@@ -108,6 +130,7 @@ public:
   enum class Operator {
     AND, OR, NOT,
     LT, GT, LEQ, GEQ, EQ, NEQ,
+    NEGATE,
     PLUS, MINUS, DIVIDES, TIMES, POW
   };
 
@@ -129,26 +152,45 @@ public:
     Symbol* sym = symtab->lookup(name);
     
     if (sym == nullptr) {
-      std::cerr << "Invalid struct instantiation: `" << name << "` is not a declared struct in this scope.";
-      std::exit(1);
+      std::cerr << "[ERROR] Invalid struct instantiation: `"
+                << name
+                << "` is not a declared struct in this scope.\n";
+      this->type_ok = false;
+      this->type = new TypeInfo(BaseType::NONE);
+      return;
     }
 
-    this->type = new TypeInfo(BaseType::STRUCT, name);
+    this->type = new TypeInfo(sym->type);
   }
 
-  // Unary: NOT
+  /*
+   * Unary operators: not and unary minus.
+   */
   Expression(Operator op, TypeInfo* operand) {
     switch (op) {
         case Operator::NOT:
-          type_ok = operand->type == BaseType::BOOL;
+          this->type_ok = operand->b_type == BaseType::BOOL;
 
-          if (type_ok)
-            type = new TypeInfo(BaseType::BOOL);
+          if (this->type_ok)
+            this->type = new TypeInfo(BaseType::BOOL);
+          else
+            this->type = new TypeInfo(BaseType::NONE);
+
+          break;
+        case Operator::NEGATE:
+          this->type_ok = operand->b_type == BaseType::INT
+                  or operand->b_type == BaseType::FLOAT;
+
+          if (this->type_ok)
+            this->type = new TypeInfo(operand->b_type);
+          else
+            this->type = new TypeInfo(BaseType::NONE);
 
           break;
         default:
-            std::cerr << "Unsupported unary operator\n";
-            type_ok = false;
+            std::cerr << "[ERROR] Unsupported unary operator\n";
+            this->type_ok = false;
+            this->type = new TypeInfo(BaseType::NONE);
     }
   }
 
@@ -183,54 +225,68 @@ public:
 
 private:
   void typeCheck_Logical(TypeInfo* left, TypeInfo* right) {
-    this->type_ok = left->type == BaseType::BOOL && right->type == BaseType::BOOL;
+    this->type_ok = left->b_type == BaseType::BOOL 
+                  && right->b_type == BaseType::BOOL;
 
     if (this->type_ok)
       this->type = new TypeInfo(BaseType::BOOL);
+    else
+      this->type = new TypeInfo(BaseType::NONE);
   }
 
   
   void typeCheck_Arithmetic(TypeInfo* left, Operator op, TypeInfo* right) {
     if (op == Operator::POW) {
-        if ((left->type == BaseType::INT || left->type == BaseType::FLOAT) &&
-            (right->type == BaseType::INT || right->type == BaseType::FLOAT)) {
+        if ((left->b_type == BaseType::INT || left->b_type == BaseType::FLOAT) &&
+            (right->b_type == BaseType::INT || right->b_type == BaseType::FLOAT)) {
             this->type_ok = true;
             this->type = new TypeInfo(BaseType::FLOAT);
         } else {
             this->type_ok = false;
+            this->type = new TypeInfo(BaseType::NONE);
         }
         return;
     }
 
-    bool left_valid  = (left->type == BaseType::INT || left->type == BaseType::FLOAT);
-    bool right_valid = (right->type == BaseType::INT || right->type == BaseType::FLOAT);
+    bool left_valid  = (left->b_type == BaseType::INT || left->b_type == BaseType::FLOAT);
+    bool right_valid = (right->b_type == BaseType::INT || right->b_type == BaseType::FLOAT);
 
     if (left_valid && right_valid) {
-        BaseType result_type = (left->type == BaseType::FLOAT || right->type == BaseType::FLOAT)
-                             ? BaseType::FLOAT
-                             : BaseType::INT;
+        BaseType result_type = (left->b_type == BaseType::FLOAT || right->b_type == BaseType::FLOAT) ? BaseType::FLOAT : BaseType::INT;
+
         this->type = new TypeInfo(result_type);
         this->type_ok = true;
     } else {
         this->type_ok = false;
+        this->type = new TypeInfo(BaseType::NONE);
     }
   }
 
   void typeCheck_Relational(TypeInfo* left, TypeInfo* right) {
-    if ((left->type == BaseType::INT || left->type == BaseType::FLOAT) &&
-        left->type == right->type) {
-        type_ok = true;
-        type = new TypeInfo(BaseType::BOOL);
+    if ((left->b_type == BaseType::INT || left->b_type == BaseType::FLOAT) &&
+        left->b_type == right->b_type) {
+
+        this->type_ok = true;
+        this->type = new TypeInfo(BaseType::BOOL);
     } else {
-        type_ok = false;
+        std::cerr << "[ERROR] Can't compare ´"
+                  << *left
+                  << "´ and ´"
+                  << *right
+                  << "´.\n";
+
+        this->type_ok = false;
+        this->type = new TypeInfo(BaseType::NONE);
     }
   }
 
   void typeCheck_Equality(TypeInfo* left, TypeInfo* right) {
-    type_ok = left->type == right->type;
+    this->type_ok = left->b_type == right->b_type;
 
     if (type_ok)
-      type = new TypeInfo(BaseType::BOOL);
+      this->type = new TypeInfo(BaseType::BOOL);
+    else
+      this->type = new TypeInfo(BaseType::NONE);
   }
 };
 
@@ -238,15 +294,22 @@ class Variable : public SemanticAction {
 public:
   TypeInfo* type;
 
+  /*
+   * Handling the reference of a simple variable, with no access tail.
+   */
   Variable(SymbolTable* symtab, std::string name) {
     Symbol* sym = symtab->lookup(name);
 
     if (sym == nullptr) {
-      std::cerr << "Name not found." << std::endl;
+      std::cerr << "[ERROR] The name ´"
+                << name
+                << "´ isn't declared anywhere in this scope.\n";
       this->type = new TypeInfo(BaseType::NONE);
+      this->type_ok = false;
       return;
     }
 
+    this->type_ok = true;
     this->type = &sym->type;
   }
 
@@ -255,16 +318,25 @@ public:
   * The struct may come by an expression, so we receive it.
   */
   Variable(SymbolTable* symtab, Expression* exp, std::string name) {
-    if (exp->type->type != BaseType::STRUCT) {
-      std::cerr << "Trying to use dot notation on a non-struct object." << std::endl;
-      std::exit(1);
+    if (exp->type->b_type != BaseType::STRUCT) {
+      std::cerr << "[ERROR] Trying to use dot notation on a non-struct object.\n";
+
+      this->type_ok = false;
+      this->type = new TypeInfo(BaseType::NONE);
+
+      return;
     }
     
     Symbol* sym = symtab->lookup(exp->type->struct_name);
 
     if (sym == nullptr) {
-      std::cerr << "Name not found." << std::endl;
+      std::cerr << "[ERROR] Invalid access to struct field: ´"
+                << exp->type->struct_name
+                << "´ isn't declared as a struct anywhere in this scope.\n";
+
+      this->type_ok = false;
       this->type = new TypeInfo(BaseType::NONE);
+
       return;
     }
 
@@ -272,11 +344,50 @@ public:
       if (name == field.first) {
         this->type_ok = true;
         this->type = &sym->type;
+
         return;
       }
     }
 
-    std::cerr << "Invalid access to struct field: non-existent field `" << name << "`" << std::endl;
-    std::exit(1);
+    std::cerr << "[ERROR] Invalid access to struct field: non-existent field `"
+              << name 
+              << "`.\n";
+
+    this->type_ok = false;
+    this->type = new TypeInfo(BaseType::NONE);
+  }
+};
+
+class Reference : public SemanticAction {
+public:
+  TypeInfo* type;
+
+  Reference(TypeInfo* base_type) {
+    if (base_type->b_type == BaseType::NONE) {
+      std::cerr << "[ERROR] Cannot create reference to an invalid type.\n";
+      this->type_ok = false;
+      this->type = new TypeInfo(BaseType::NONE);
+      return;
+    }
+
+    this->type_ok = true;
+    this->type = new TypeInfo(BaseType::REFERENCE, *base_type);
+  }
+};
+
+class Dereference : public SemanticAction {
+public:
+  TypeInfo* type;
+
+  Dereference(TypeInfo* type) {
+    if (type->b_type != BaseType::REFERENCE) {
+      std::cerr << "[ERROR] Cannot dereference a type that isn't a reference.\n";
+      this->type_ok = false;
+      this->type = new TypeInfo(BaseType::NONE);
+      return;
+    }
+
+    this->type_ok = true;
+    this->type = type->ref_base.get();
   }
 };

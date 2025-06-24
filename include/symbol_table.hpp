@@ -19,7 +19,7 @@ inline std::ostream& operator<<(std::ostream& os, BaseType type) {
         case BaseType::STRING: return os << "string";
         case BaseType::BOOL: return os << "bool";
         case BaseType::STRUCT: return os << "struct";
-        case BaseType::REFERENCE: return os << "reference";
+        case BaseType::REFERENCE: return os << "ref";
         default: return os << "error";
     }
 }
@@ -39,22 +39,70 @@ inline std::ostream& operator<<(std::ostream& os, SymbolKind kind) {
 }
 
 struct TypeInfo {
-	BaseType type;
+	BaseType b_type;
 	std::string struct_name;
 	std::shared_ptr<TypeInfo> ref_base;
 
-	TypeInfo(BaseType type)
-		: type(type)
+	TypeInfo(BaseType b_type)
+		: b_type(b_type)
 	{}
 
-	TypeInfo(BaseType type, std::string struct_name)
-		: type(type), struct_name(struct_name)
+	TypeInfo(BaseType b_type, std::string struct_name)
+		: b_type(b_type), struct_name(struct_name)
 	{}
 	
-	TypeInfo(BaseType type, TypeInfo ref_base)
-		: type(type), ref_base(std::make_shared<TypeInfo>(ref_base))
+	TypeInfo(BaseType b_type, TypeInfo ref_base)
+		: b_type(b_type), ref_base(std::make_shared<TypeInfo>(ref_base))
+	{}
+	
+	TypeInfo(const TypeInfo& other)
+		: b_type(other.b_type),
+		  struct_name(other.struct_name),
+		  ref_base(other.ref_base ? std::make_shared<TypeInfo>(*other.ref_base) : nullptr)
 	{}
 };
+
+inline std::ostream& operator<<(std::ostream& os, const TypeInfo& type) {
+    if (type.b_type == BaseType::REFERENCE) {
+        os << "ref(";
+        if (type.ref_base)
+            os << *type.ref_base;
+        else
+            os << "???";
+        os << ")";
+    }
+    else if (type.b_type == BaseType::STRUCT) {
+        os << "struct(" << type.struct_name << ")";
+    }
+    else {
+        os << type.b_type;
+    }
+
+    return os;
+}
+
+inline bool operator==(const TypeInfo& lhs, const TypeInfo& rhs) {
+    if (lhs.b_type != rhs.b_type)
+        return false;
+
+    // If struct, compare struct names
+    if (lhs.b_type == BaseType::STRUCT && lhs.struct_name != rhs.struct_name)
+        return false;
+
+    // If reference, compare the base types recursively
+    if (lhs.b_type == BaseType::REFERENCE) {
+        if (!lhs.ref_base || !rhs.ref_base)
+            return false; // mismatched presence of base
+
+        return *lhs.ref_base == *rhs.ref_base; // recursive comparison
+    }
+
+    return true;
+}
+
+inline bool operator!=(const TypeInfo& lhs, const TypeInfo& rhs) {
+    return !(lhs == rhs);
+}
 
 struct Symbol {
 	std::string name;
