@@ -1,0 +1,15 @@
+
+// Expressão solta no while
+program exprInWhile
+begin
+	procedure main ()
+	begin
+		var b : bool := false;
+		struct slaoq {
+			x : bool
+
+		};
+		var a : bool := slaoq.x
+	in
+	end
+end
