@@ -545,7 +545,10 @@ public:
                 << "` is not declared in this scope.\n";
     }
 
-    if (eq->type->b_type != BaseType::INT or to->type->b_type != BaseType::INT or step->type->b_type != BaseType::INT) {
+    if (sym->type.b_type != BaseType::INT
+        or eq->type->b_type != BaseType::INT
+        or to->type->b_type != BaseType::INT
+        or step->type->b_type != BaseType::INT) {
       std::cerr << "[ERROR] Expressions that define the loop stepping logic for must be of type `int`.\n";
       this->type_ok = false;
     }
@@ -559,7 +562,7 @@ public:
 
     if (condition->type->b_type != BaseType::BOOL) {
 
-      std::cerr << "[ERROR] The condition that defines the while loop must be of type `bool`."
+      std::cerr << "[ERROR] The condition that defines the while loop stop must be of type `bool`."
                 << " Received `" << *condition->type << "`.\n";
 
       this->type_ok = false;
@@ -574,7 +577,7 @@ public:
 
     if (condition->type->b_type != BaseType::BOOL) {
 
-      std::cerr << "[ERROR] The condition that defines the do-until loop must be of type `bool`."
+      std::cerr << "[ERROR] The condition that defines the do-until loop stop must be of type `bool`."
                 << " Received `" << *condition->type << "`.\n";
 
       this->type_ok = false;
