@@ -642,3 +642,17 @@ public:
     }
   }
 };
+
+class IfStatement : public SemanticAction {
+public:
+  IfStatement(Expression* condition) {
+    this->type_ok = condition->type_ok;
+
+    if (condition->type->b_type != BaseType::BOOL) {
+      std::cerr << "[ERROR] The condition that defines the if statement branching must be of type `bool`."
+                << " Received `" << *condition->type << "`.\n";
+
+      this->type_ok = false;
+    }
+  }
+};

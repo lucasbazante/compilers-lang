@@ -36,6 +36,7 @@ SymbolTable symtab;
     ForStatement* for_stmt;
     WhileStatement* while_stmt;
     DoUntilStatement* do_until_stmt;
+    IfStatement* if_stmt;
 
     // Less complicated types: no action besides the basic
     std::string* name;
@@ -76,11 +77,13 @@ SymbolTable symtab;
 %type <variable> var
 %type <reference> ref_var
 %type <dereference> deref_var
+
 %type <call> call_stmt
 %type <assign_stmt> assign_stmt
 %type <for_stmt> for_stmt
 %type <while_stmt> while_stmt
 %type <do_until_stmt> do_until_stmt
+%type <if_stmt> if_stmt
 
 %type <type> return_type_opt
 %type <type> type
@@ -230,7 +233,7 @@ assign_stmt:
     ;
 
 if_stmt:
-    If exp Then stmt_list else_opt Fi
+    If exp Then stmt_list else_opt Fi { $$ = new IfStatement($2); }
     ;
 
 else_opt:
