@@ -20,6 +20,7 @@ inline std::ostream& operator<<(std::ostream& os, BaseType type) {
         case BaseType::BOOL: return os << "bool";
         case BaseType::STRUCT: return os << "struct";
         case BaseType::REFERENCE: return os << "ref";
+	case BaseType::NONE: return os << "none";
         default: return os << "error";
     }
 }
