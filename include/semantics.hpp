@@ -157,6 +157,10 @@ public:
 
 // ---- Statements ----
 
+class Statement : public SemanticAction {
+public:
+  TypeInfo* return_type;
+};
 // ---- Expressions ----
 
 class Expression : public SemanticAction {
@@ -398,7 +402,7 @@ public:
     for (auto field : sym->parameters) {
       if (name == field.first) {
         this->type_ok = true;
-        this->type = &sym->type;
+        this->type = &field.second;
 
         return;
       }
