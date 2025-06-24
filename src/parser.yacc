@@ -51,6 +51,7 @@ SymbolTable symtab;
 %type <action> ref_var
 %type <action> deref_var
 %type <action> call_stmt
+%type <action> assign_stmt
 %type <action> proc_decl_signature
 %type <action> paramfield_decl
 %type <action> paramfield_decl_list
@@ -203,8 +204,8 @@ stmt:
     ;
 
 assign_stmt:
-    var Assign exp
-    | deref_var Assign exp
+    var Assign exp { $$ = new AssignStatement(static_cast<Variable*>($1), static_cast<Expression*>($3)); }
+    | deref_var Assign exp { $$ = new AssignStatement(static_cast<Dereference*>($1), static_cast<Expression*>($3)); }
     ;
 
 if_stmt:

@@ -155,8 +155,6 @@ public:
   }
 };
 
-// ---- Statements ----
-
 // ---- Expressions ----
 
 class Expression : public SemanticAction {
@@ -273,28 +271,28 @@ private:
   
   void typeCheck_Arithmetic(TypeInfo* left, Operator op, TypeInfo* right) {
     if (op == Operator::POW) {
-        if ((left->b_type == BaseType::INT || left->b_type == BaseType::FLOAT) &&
-            (right->b_type == BaseType::INT || right->b_type == BaseType::FLOAT)) {
-            this->type_ok = true;
-            this->type = new TypeInfo(BaseType::FLOAT);
-        } else {
-            this->type_ok = false;
-            this->type = new TypeInfo(BaseType::NONE);
-        }
-        return;
+      if ((left->b_type == BaseType::INT || left->b_type == BaseType::FLOAT) &&
+          (right->b_type == BaseType::INT || right->b_type == BaseType::FLOAT)) {
+          this->type_ok = true;
+          this->type = new TypeInfo(BaseType::FLOAT);
+      } else {
+          this->type_ok = false;
+          this->type = new TypeInfo(BaseType::NONE);
+      }
+      return;
     }
 
     bool left_valid  = (left->b_type == BaseType::INT || left->b_type == BaseType::FLOAT);
     bool right_valid = (right->b_type == BaseType::INT || right->b_type == BaseType::FLOAT);
 
     if (left_valid && right_valid) {
-        BaseType result_type = (left->b_type == BaseType::FLOAT || right->b_type == BaseType::FLOAT) ? BaseType::FLOAT : BaseType::INT;
+      BaseType result_type = (left->b_type == BaseType::FLOAT || right->b_type == BaseType::FLOAT) ? BaseType::FLOAT : BaseType::INT;
 
-        this->type = new TypeInfo(result_type);
-        this->type_ok = true;
+      this->type = new TypeInfo(result_type);
+      this->type_ok = true;
     } else {
-        this->type_ok = false;
-        this->type = new TypeInfo(BaseType::NONE);
+      this->type_ok = false;
+      this->type = new TypeInfo(BaseType::NONE);
     }
   }
 
@@ -498,5 +496,38 @@ public:
     // If we reached here, the call is valid
     this->type_ok = true;
     this->type = new TypeInfo(fun->type);  // Copy return type  }
+  }
+};
+
+// ---- Statements ----
+
+class AssignStatement : public SemanticAction {
+public:
+  AssignStatement(Variable* var, Expression* exp) {
+    if (var->type != exp->type) {
+      std::cerr << "[ERROR] Type error on assignment: expected `"
+                << var->type
+                << "`, got `"
+                << exp->type
+                << "`.\n";
+      this->type_ok = false;
+      return;
+    }
+
+    this->type_ok = var->type_ok and exp->type_ok;
+  }
+
+  AssignStatement(Dereference* deref, Expression* exp) {
+    if (deref->type != exp->type) {
+      std::cerr << "[ERROR] Type error on assignment: expected `"
+                << deref->type
+                << "`, got `"
+                << exp->type
+                << "`.\n";
+      this->type_ok = false;
+      return;
+    }
+
+    this->type_ok = deref->type_ok and exp->type_ok;
   }
 };
