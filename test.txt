@@ -14,11 +14,11 @@ begin
     in
     end;
 
-    procedure test(a : int, b : int) : int
+    procedure test(a : int, b : int)
     begin
         var c : int
     in
     end;
 
-    var y : int := 5 + test(i, j)
+    var y : int := 5 + test(i, i)
 end

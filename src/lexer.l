@@ -94,7 +94,7 @@ return { return yytokentype::Return; }
 
 {D}+			    { return yytokentype::Int_L; }
 ({D}+"."{D}+)(e[+-]{D}{D})? { return yytokentype::Float_L; }
-\".\"			    { return yytokentype::String_L; }
+\".*\"			    { return yytokentype::String_L; }
 true|false		    { return yytokentype::Bool_L; }
 null			    { return yytokentype::Null; }
 

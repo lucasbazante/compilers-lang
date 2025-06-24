@@ -301,7 +301,8 @@ exp:
           $$ = new Expression(lhs->type, Expression::Operator::NEQ, rhs->type);
       }
     | Minus exp %prec UMINUS {
-        $$ = new Expression(BaseType::INT);
+        auto expr = static_cast<Expression*>($2);
+        $$ = new Expression(Expression::Operator::NEGATE, expr->type);
       }
     | exp Plus exp {
           auto lhs = static_cast<Expression*>($1);

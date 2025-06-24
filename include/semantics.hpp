@@ -155,6 +155,8 @@ public:
   }
 };
 
+// ---- Statements ----
+
 // ---- Expressions ----
 
 class Expression : public SemanticAction {
@@ -297,8 +299,8 @@ private:
   }
 
   void typeCheck_Relational(TypeInfo* left, TypeInfo* right) {
-    if ((left->b_type == BaseType::INT || left->b_type == BaseType::FLOAT) &&
-        left->b_type == right->b_type) {
+    if ((left->b_type == BaseType::INT or left->b_type == BaseType::FLOAT) and
+        (right->b_type == BaseType::INT or right->b_type == BaseType::FLOAT)) {
 
         this->type_ok = true;
         this->type = new TypeInfo(BaseType::BOOL);
@@ -315,7 +317,11 @@ private:
   }
 
   void typeCheck_Equality(TypeInfo* left, TypeInfo* right) {
-    this->type_ok = left->b_type == right->b_type;
+    if ((left->b_type == BaseType::INT or left->b_type == BaseType::FLOAT) and
+        (right->b_type == BaseType::INT or right->b_type == BaseType::FLOAT))
+      this->type_ok = true;
+    else
+      this->type_ok = left->b_type == right->b_type;
 
     if (type_ok)
       this->type = new TypeInfo(BaseType::BOOL);
