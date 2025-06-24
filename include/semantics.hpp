@@ -123,16 +123,34 @@ public:
 
 class ProcedureDecl : public SemanticAction {
 public:
+  std::string name;
+
   ProcedureDecl(SymbolTable* symtab, std::string name, ParameterField* params, TypeInfo* return_type) {
     Symbol sym(name, SymbolKind::FUNCTION, *return_type);
 
-    for (auto* param : params->fields)
+    for (auto param : params->fields)
       sym.parameters.push_back({param->name, *param->type});
 
     if (not symtab->insert(sym)) {
       std::cerr << "[ERROR] Procedure `"
                 << name
                 << "` is already declared in this scope.\n";
+    }
+
+    this->name = name;
+  }
+
+  void declare_params_in_scope(SymbolTable* symtab, ParameterField* params) {
+    for (auto param : params->fields) {
+      Symbol sym(param->name, SymbolKind::PARAMETER, *param->type);
+
+      if (not symtab->insert(sym)) {
+        std::cerr << "[ERROR] Redeclaration of parameter `"
+                  << sym.name
+                  << "` in procedure `"
+                  << this->name
+                  << "`.\n";
+      }
     }
   }
 };

@@ -8,11 +8,9 @@ begin
 
     procedure swap (a: ref(int), b : ref(int))
     begin
-        var tmp : int
+        var tmp : int := 5;
+        var tmp2 : float := 5.5;
+        var i : ref(int) := ref(tmp)
     in
-    end;
-
-    procedure swap()
-    begin
     end
 end

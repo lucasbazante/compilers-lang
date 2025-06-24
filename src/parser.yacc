@@ -50,7 +50,7 @@ SymbolTable symtab;
 %type <action> var
 %type <action> ref_var
 %type <action> deref_var
-%type <action> proc_decl
+%type <action> proc_decl_signature
 %type <action> paramfield_decl
 %type <action> paramfield_decl_list
 %type <action> paramfield_decl_list_opt
@@ -102,13 +102,21 @@ var_decl:
     ;
 
 proc_decl:
-    Procedure Identifier L_Paren paramfield_list_opt R_Paren return_type_opt Begin proc_body End {
+    proc_decl_signature Begin proc_body End {
+        symtab.pop();
+      }
+    ;
+
+proc_decl_signature:
+    Procedure Identifier L_Paren paramfield_list_opt R_Paren return_type_opt {
         auto name = *$2;
         auto params = static_cast<ParameterField*>($4);
         auto return_type = static_cast<TypeInfo*>($6);
 
         $$ = new ProcedureDecl(&symtab, name, params, return_type);
-    }
+        symtab.push();
+        static_cast<ProcedureDecl*>($$)->declare_params_in_scope(&symtab, params);
+      }
     ;
 
 proc_body:
