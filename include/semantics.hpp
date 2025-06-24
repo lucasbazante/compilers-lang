@@ -324,6 +324,21 @@ private:
   }
 };
 
+class ExpressionList : public SemanticAction {
+public:
+    std::vector<Expression*> exp_list;
+    
+    ExpressionList() = default;
+
+    void add(Expression* exp) {
+      this->exp_list.push_back(exp);
+    }
+
+    ~ExpressionList() {
+      for (auto e : exp_list) delete e;
+    }
+};
+
 class Variable : public SemanticAction {
 public:
   TypeInfo* type;
@@ -423,5 +438,59 @@ public:
 
     this->type_ok = true;
     this->type = type->ref_base.get();
+  }
+};
+
+class Call : public SemanticAction {
+public:
+  TypeInfo* type;
+
+  Call(SymbolTable* symtab, std::string f_name, ExpressionList* exp_list) {
+    Symbol* fun = symtab->lookup(f_name);
+
+    if (fun == nullptr) {
+      std::cerr << "[ERROR] Call to non-declared function `"
+                << f_name
+                << "`.\n";
+      
+      this->type_ok = false;
+      this->type = new TypeInfo(BaseType::NONE);
+      return;
+    }
+
+    if (fun->kind != SymbolKind::FUNCTION) {
+      std::cerr << "[ERROR] `"
+                << f_name
+                << "` is not a function.\n";
+
+      this->type_ok = false;
+      this->type = new TypeInfo(BaseType::NONE);
+    }
+
+    const auto& param_types = fun->parameters;
+    const auto& arg_exprs = exp_list->exp_list;
+
+     if (param_types.size() != arg_exprs.size()) {
+      std::cerr << "[ERROR] Function `" << f_name << "` expects " << param_types.size()
+                << " arguments, but got " << arg_exprs.size() << ".\n";
+      this->type_ok = false;
+      this->type = new TypeInfo(BaseType::NONE);
+      return;
+    }
+
+    for (size_t i = 0; i < param_types.size(); ++i) {
+      if (!(*arg_exprs[i]->type == param_types[i].second)) {
+        std::cerr << "[ERROR] Argument " << i + 1 << " of call to `" << f_name
+                  << "` has type `" << *arg_exprs[i]->type << "`, expected `"
+                  << param_types[i].second << "`.\n";
+        this->type_ok = false;
+        this->type = new TypeInfo(BaseType::NONE);
+        return;
+      }
+    }
+
+    // If we reached here, the call is valid
+    this->type_ok = true;
+    this->type = new TypeInfo(fun->type);  // Copy return type  }
   }
 };

@@ -50,12 +50,15 @@ SymbolTable symtab;
 %type <action> var
 %type <action> ref_var
 %type <action> deref_var
+%type <action> call_stmt
 %type <action> proc_decl_signature
 %type <action> paramfield_decl
 %type <action> paramfield_decl_list
 %type <action> paramfield_decl_list_opt
 %type <action> paramfield_list
 %type <action> paramfield_list_opt
+%type <action> exp_list
+%type <action> exp_list_opt
 
 %type <type> return_type_opt
 %type <type> type
@@ -231,17 +234,25 @@ return_stmt:
     ;
 
 call_stmt:
-    Identifier L_Paren exp_list_opt R_Paren
+    Identifier L_Paren exp_list_opt R_Paren { $$ = new Call(&symtab, *$1, static_cast<ExpressionList*>($3)); }
     ;
 
 exp_list_opt:
-    /* empty */
-    | exp_list
+    /* empty */ { $$ = new ExpressionList(); }
+    | exp_list { $$ = $1; }
     ;
 
 exp_list:
-    exp
-    | exp_list Comma exp
+    exp {
+        auto list = new ExpressionList();
+        list->add(static_cast<Expression*>($1));
+        $$ = list;
+      }
+    | exp_list Comma exp {
+        auto list = static_cast<ExpressionList*>($1);
+        list->add(static_cast<Expression*>($3));
+        $$ = list;
+      }
     ;
 
 exp:
@@ -318,7 +329,7 @@ exp:
           $$ = new Expression(lhs->type, Expression::Operator::POW, rhs->type);
       }
     | literal             { $$ = new Expression($1); }
-    | call_stmt           { $$ = new Expression(); }
+    | call_stmt           { auto call = static_cast<Call*>($1); $$ = new Expression(call->type); }
     | New Identifier      { $$ = new Expression(&symtab, *$2); }
     | var                 { auto v = static_cast<Variable*>($1); $$ = new Expression(v->type); }
     | ref_var             { auto ref = static_cast<Reference*>($1); $$ = new Expression(ref->type); }

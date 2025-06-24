@@ -12,5 +12,13 @@ begin
         var tmp2 : float := 5.5;
         var i : ref(int) := ref(tmp)
     in
-    end
+    end;
+
+    procedure test(a : int, b : int) : int
+    begin
+        var c : int
+    in
+    end;
+
+    var y : int := 5 + test(i, j)
 end
