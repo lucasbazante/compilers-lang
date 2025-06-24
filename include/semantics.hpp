@@ -551,3 +551,33 @@ public:
     }
   }
 };
+
+class WhileStatement : public SemanticAction {
+public:
+  WhileStatement(Expression* condition) {
+    this->type_ok = condition->type_ok;
+
+    if (condition->type->b_type != BaseType::BOOL) {
+
+      std::cerr << "[ERROR] The condition that defines the while loop must be of type `bool`."
+                << " Received `" << *condition->type << "`.\n";
+
+      this->type_ok = false;
+    }
+  }
+};
+
+class DoUntilStatement : public SemanticAction {
+public:
+  DoUntilStatement(Expression* condition) {
+    this->type_ok = condition->type_ok;
+
+    if (condition->type->b_type != BaseType::BOOL) {
+
+      std::cerr << "[ERROR] The condition that defines the do-until loop must be of type `bool`."
+                << " Received `" << *condition->type << "`.\n";
+
+      this->type_ok = false;
+    }
+  }
+};
