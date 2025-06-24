@@ -1,0 +1,11 @@
+// Elementos que definem a lógica do loop devem ser de tipo inteiro
+program example
+begin
+	procedure main ()
+	begin
+        var a : ref(int)
+	in
+        for a = 0 to 5 step 1 do
+        od
+	end
+end

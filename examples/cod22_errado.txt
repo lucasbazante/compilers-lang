@@ -1,0 +1,11 @@
+// Tipo inferido para a variável b entra em conflito na declaração de c
+program example
+begin
+	procedure main ()
+	begin
+		var a : bool := false;
+        var b := a;
+        var c : int := b
+	in
+	end
+end

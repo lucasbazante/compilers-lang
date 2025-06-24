@@ -1,0 +1,11 @@
+// ref e deref
+program example
+begin
+	procedure main ()
+	begin
+        var a : ref(ref(ref(int)));
+        var b : int
+	in
+        b := deref(deref(deref(a)))
+	end
+end

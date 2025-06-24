@@ -1,0 +1,15 @@
+// 1) Não é possível compara int e string
+// 2) Elementos que definem a condição do do-until devem ser bool
+program example
+begin
+	procedure main ()
+	begin
+        var a : string := "oi";
+        var b : int := 2
+	in
+        do
+            b := b + 1
+        until b < a
+        od
+	end
+end
