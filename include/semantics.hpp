@@ -233,7 +233,7 @@ public:
     switch (op) {
       case Operator::AND:
       case Operator::OR:
-        this->typeCheck_Logical(left, right);
+        this->typeCheck_Logical(left, op, right);
         break;
       case Operator::PLUS:
       case Operator::MINUS:
@@ -246,11 +246,11 @@ public:
       case Operator::GT:
       case Operator::LEQ:
       case Operator::GEQ:
-        this->typeCheck_Relational(left, right);
+        this->typeCheck_Relational(left, op, right);
         break;
       case Operator::EQ:
       case Operator::NEQ:
-        this->typeCheck_Equality(left, right);
+        this->typeCheck_Equality(left, op, right);
         break;
       default:
         break;
@@ -258,14 +258,45 @@ public:
   }
 
 private:
-  void typeCheck_Logical(TypeInfo* left, TypeInfo* right) {
+  std::string op_toString(Operator op) {
+    switch (op) {
+        case Operator::AND:     return "(&&)";
+        case Operator::OR:      return "(||)";
+        case Operator::NOT:     return "(not)";
+        case Operator::LT:      return "(<)";
+        case Operator::GT:      return "(>)";
+        case Operator::LEQ:     return "(<=)";
+        case Operator::GEQ:     return "(>=)";
+        case Operator::EQ:      return "(=)";
+        case Operator::NEQ:     return "(<>)";
+        case Operator::NEGATE:  return "(- [unary])";
+        case Operator::PLUS:    return "(+)";
+        case Operator::MINUS:   return "(-)";
+        case Operator::DIVIDES: return "(/)";
+        case Operator::TIMES:   return "(*)";
+        case Operator::POW:     return "(^)";
+        default:                return "(unknown_operator)";
+    }
+  }
+
+  void typeCheck_Logical(TypeInfo* left, Operator op, TypeInfo* right) {
     this->type_ok = left->b_type == BaseType::BOOL 
                   && right->b_type == BaseType::BOOL;
 
     if (this->type_ok)
       this->type = new TypeInfo(BaseType::BOOL);
-    else
+    else {
+      std::cerr << "[ERROR] Invalid operands to "
+                << this->op_toString(op)
+                << ": cannot apply to `"
+                << *left
+                << "` and `"
+                << *right
+                << "`. " << this->op_toString(op)
+                << " is only supported for `bool` operands.\n";
+
       this->type = new TypeInfo(BaseType::NONE);
+    }
   }
 
   
@@ -297,36 +328,42 @@ private:
       this->type = new TypeInfo(result_type);
       this->type_ok = true;
     } else {
-      std::cerr << "[ERROR] Invalid operands to (+): cannot apply to `"
+      std::cerr << "[ERROR] Invalid operands to "
+                    << this->op_toString(op)
+                    << ": cannot apply to `"
                     << *left
                     << "` and `"
                     << *right
-                    << "`. (+) is only supported for `int` or `float`.\n";
+                    << "`. " << this->op_toString(op)
+                    << " is only supported for `int` and `float`.\n";
 
       this->type_ok = false;
       this->type = new TypeInfo(BaseType::NONE);
     }
   }
 
-  void typeCheck_Relational(TypeInfo* left, TypeInfo* right) {
+  void typeCheck_Relational(TypeInfo* left, Operator op, TypeInfo* right) {
     if ((left->b_type == BaseType::INT or left->b_type == BaseType::FLOAT) and
       (right->b_type == BaseType::INT or right->b_type == BaseType::FLOAT)) {
 
       this->type_ok = true;
       this->type = new TypeInfo(BaseType::BOOL);
     } else {
-      std::cerr << "[ERROR] Can't compare ´"
+      std::cerr << "[ERROR] Invalid operands to "
+                << this->op_toString(op)
+                << ": cannot compare `"
                 << *left
-                << "´ and ´"
+                << "` and `"
                 << *right
-                << "´. Both operands must be of the same type.\n";
+                << "`. " << this->op_toString(op)
+                << " is only supported for `int` and `float` operands.\n";
 
       this->type_ok = false;
       this->type = new TypeInfo(BaseType::NONE);
     }
   }
 
-  void typeCheck_Equality(TypeInfo* left, TypeInfo* right) {
+  void typeCheck_Equality(TypeInfo* left, Operator op, TypeInfo* right) {
     if ((left->b_type == BaseType::INT or left->b_type == BaseType::FLOAT) and
         (right->b_type == BaseType::INT or right->b_type == BaseType::FLOAT))
       this->type_ok = true;
@@ -336,11 +373,14 @@ private:
     if (type_ok)
       this->type = new TypeInfo(BaseType::BOOL);
     else {
-      std::cerr << "[ERROR] Can't compare ´"
+      std::cerr << "[ERROR] Invalid operands to "
+                << this->op_toString(op)
+                << ": cannot compare `"
                 << *left
-                << "´ and ´"
+                << "` and `"
                 << *right
-                << "´. Both operands must be of the same type.\n";
+                << "`. " << this->op_toString(op)
+                << " is only supported for operands of the same type (or `int` and `float`).\n";
       this->type = new TypeInfo(BaseType::NONE);
     }
   }
