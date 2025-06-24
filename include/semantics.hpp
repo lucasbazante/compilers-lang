@@ -276,6 +276,12 @@ private:
           this->type_ok = true;
           this->type = new TypeInfo(BaseType::FLOAT);
       } else {
+          std::cerr << "[ERROR] Invalid operands to (^): cannot apply to `"
+                    << *left
+                    << "` and `"
+                    << *right
+                    << "`. (^) is only supported for `int` or `float`.\n";
+
           this->type_ok = false;
           this->type = new TypeInfo(BaseType::NONE);
       }
@@ -291,6 +297,12 @@ private:
       this->type = new TypeInfo(result_type);
       this->type_ok = true;
     } else {
+      std::cerr << "[ERROR] Invalid operands to (+): cannot apply to `"
+                    << *left
+                    << "` and `"
+                    << *right
+                    << "`. (+) is only supported for `int` or `float`.\n";
+
       this->type_ok = false;
       this->type = new TypeInfo(BaseType::NONE);
     }
@@ -298,19 +310,19 @@ private:
 
   void typeCheck_Relational(TypeInfo* left, TypeInfo* right) {
     if ((left->b_type == BaseType::INT or left->b_type == BaseType::FLOAT) and
-        (right->b_type == BaseType::INT or right->b_type == BaseType::FLOAT)) {
+      (right->b_type == BaseType::INT or right->b_type == BaseType::FLOAT)) {
 
-        this->type_ok = true;
-        this->type = new TypeInfo(BaseType::BOOL);
+      this->type_ok = true;
+      this->type = new TypeInfo(BaseType::BOOL);
     } else {
-        std::cerr << "[ERROR] Can't compare ´"
-                  << *left
-                  << "´ and ´"
-                  << *right
-                  << "´.\n";
+      std::cerr << "[ERROR] Can't compare ´"
+                << *left
+                << "´ and ´"
+                << *right
+                << "´. Both operands must be of the same type.\n";
 
-        this->type_ok = false;
-        this->type = new TypeInfo(BaseType::NONE);
+      this->type_ok = false;
+      this->type = new TypeInfo(BaseType::NONE);
     }
   }
 
@@ -323,8 +335,14 @@ private:
 
     if (type_ok)
       this->type = new TypeInfo(BaseType::BOOL);
-    else
+    else {
+      std::cerr << "[ERROR] Can't compare ´"
+                << *left
+                << "´ and ´"
+                << *right
+                << "´. Both operands must be of the same type.\n";
       this->type = new TypeInfo(BaseType::NONE);
+    }
   }
 };
 
