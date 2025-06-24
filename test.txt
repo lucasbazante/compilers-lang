@@ -4,5 +4,15 @@ begin
     var j : ref(int) := ref(i);
     var k : ref(ref(int)) := ref(j);
 
-    var x : int := deref(deref(k)) + 5
+    var x : int := deref(deref(k)) + 5;
+
+    procedure swap (a: ref(int), b : ref(int))
+    begin
+        var tmp : int
+    in
+    end;
+
+    procedure swap()
+    begin
+    end
 end

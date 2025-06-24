@@ -50,9 +50,14 @@ SymbolTable symtab;
 %type <action> var
 %type <action> ref_var
 %type <action> deref_var
+%type <action> proc_decl
 %type <action> paramfield_decl
 %type <action> paramfield_decl_list
 %type <action> paramfield_decl_list_opt
+%type <action> paramfield_list
+%type <action> paramfield_list_opt
+
+%type <type> return_type_opt
 %type <type> type
 %type <type> literal
 
@@ -97,7 +102,13 @@ var_decl:
     ;
 
 proc_decl:
-    Procedure Identifier L_Paren paramfield_list_opt R_Paren return_type_opt Begin proc_body End
+    Procedure Identifier L_Paren paramfield_list_opt R_Paren return_type_opt Begin proc_body End {
+        auto name = *$2;
+        auto params = static_cast<ParameterField*>($4);
+        auto return_type = static_cast<TypeInfo*>($6);
+
+        $$ = new ProcedureDecl(&symtab, name, params, return_type);
+    }
     ;
 
 proc_body:
@@ -139,13 +150,25 @@ paramfield_decl_list:
     ;
 
 paramfield_list_opt:
-    /* empty */
-    | paramfield_list
+    /* empty */ {
+        $$ = new ParameterField();
+      }
+    | paramfield_list {
+        $$ = $1;
+      }
     ;
 
 paramfield_list:
-    paramfield_decl
-    | paramfield_list Comma paramfield_decl
+    paramfield_decl {
+        auto list = new ParameterField();
+        list->add(static_cast<ParameterDecl*>($1));
+        $$ = list;
+      }
+    | paramfield_list Comma paramfield_decl {
+        auto list = static_cast<ParameterField*>($1);
+        list->add(static_cast<ParameterDecl*>($3));
+        $$ = list;
+      }
     ;
 
 paramfield_decl:
@@ -333,8 +356,8 @@ type:
     ;
 
 return_type_opt:
-    /* empty */
-    | Colon type
+    /* empty */  { $$ = new TypeInfo(BaseType::NONE); }
+    | Colon type { $$ = $2; }
     ;
 
 %%

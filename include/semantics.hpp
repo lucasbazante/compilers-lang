@@ -121,6 +121,22 @@ public:
   }
 };
 
+class ProcedureDecl : public SemanticAction {
+public:
+  ProcedureDecl(SymbolTable* symtab, std::string name, ParameterField* params, TypeInfo* return_type) {
+    Symbol sym(name, SymbolKind::FUNCTION, *return_type);
+
+    for (auto* param : params->fields)
+      sym.parameters.push_back({param->name, *param->type});
+
+    if (not symtab->insert(sym)) {
+      std::cerr << "[ERROR] Procedure `"
+                << name
+                << "` is already declared in this scope.\n";
+    }
+  }
+};
+
 // ---- Expressions ----
 
 class Expression : public SemanticAction {
