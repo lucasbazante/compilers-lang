@@ -4,15 +4,18 @@ program exprInWhile
 begin
 	procedure main ()
 	begin
-		var b : bool := false;
 		var d : int;
 		struct slaoq {
 			x : int
 		};
-		var a := ref(b);
-		var c : ref(bool) := a + 1
+
+		var b : bool := false;
+		var a := ref(b)
+		//var c : ref(bool) := a + 1
 	in
-		d := 1
+		d := 1;
+
+		for d = 1 to 5 step 1.0 do od
 	end
 end
 

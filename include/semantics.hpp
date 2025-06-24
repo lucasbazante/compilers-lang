@@ -531,3 +531,23 @@ public:
     this->type_ok = deref->type_ok and exp->type_ok;
   }
 };
+
+class ForStatement : public SemanticAction {
+public:
+  ForStatement(SymbolTable* symtab, std::string name, Expression* eq, Expression* to, Expression* step) {
+    this->type_ok = true;
+
+    Symbol* sym = symtab->lookup(name);
+
+    if (sym == nullptr) {
+      std::cerr << "[ERROR] Name `"
+                << name
+                << "` is not declared in this scope.\n";
+    }
+
+    if (eq->type->b_type != BaseType::INT or to->type->b_type != BaseType::INT or step->type->b_type != BaseType::INT) {
+      std::cerr << "[ERROR] Expressions that define the loop stepping logic for must be of type `int`.\n";
+      this->type_ok = false;
+    }
+  }
+};

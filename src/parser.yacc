@@ -33,6 +33,7 @@ SymbolTable symtab;
     Dereference* dereference;
     Call* call;
     AssignStatement* assign_stmt;
+    ForStatement* for_stmt;
 
     // Less complicated types: no action besides the basic
     std::string* name;
@@ -75,6 +76,7 @@ SymbolTable symtab;
 %type <dereference> deref_var
 %type <call> call_stmt
 %type <assign_stmt> assign_stmt
+%type <for_stmt> for_stmt
 
 %type <type> return_type_opt
 %type <type> type
@@ -237,7 +239,7 @@ while_stmt:
     ;
 
 for_stmt:
-    For Identifier Eq exp To exp Step exp Do stmt_list Od
+    For Identifier Eq exp To exp Step exp Do stmt_list Od { $$ = new ForStatement(&symtab, *$2, $4, $6, $8); }
     ;
 
 do_until_stmt:
