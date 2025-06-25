@@ -7,20 +7,17 @@ begin
 		var d : int;
 
 		struct Exemplo {
-			x : int
+			x : string
 		};
-		var a : float;
 
-		procedure f(x : int, y : int) : int
+		var ex : Exemplo;
+
+		procedure f(x : float) : int
 		begin
-			return 1.0
-		end;
-
-		var xx : ref(int) := ref(f)
+		in
+			return x + ex.x
+		end
+	
 	in
-		d := 1 + f(1, 1) + 5.0;
-		a := 1
-		//a := Exemplo.x;
-		//Exemplo.x := a
 	end
 end

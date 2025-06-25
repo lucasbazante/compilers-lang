@@ -172,6 +172,7 @@ struct Symbol {
  * This is a class to represent a scope block in our symbol table.
  *
  * The attribute `name` refers to what procedure the scope refers to.
+ * We use this to properly set up an error log.
  *
  * The attribute `parent` is a pointer to another scope, the enclosing
  * scope. Thanks to this, we can access variables defined in enclosing
