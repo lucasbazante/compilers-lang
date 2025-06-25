@@ -37,6 +37,9 @@ SymbolTable symtab;
     WhileStatement* while_stmt;
     DoUntilStatement* do_until_stmt;
     IfStatement* if_stmt;
+    ReturnStatement* return_stmt;
+    Statement* stmt;
+    StatementList* stmt_list;
 
     // Less complicated types: no action besides the basic
     std::string* name;
@@ -84,10 +87,15 @@ SymbolTable symtab;
 %type <while_stmt> while_stmt
 %type <do_until_stmt> do_until_stmt
 %type <if_stmt> if_stmt
+%type <stmt_list> else_opt
+%type <return_stmt> return_stmt
+%type <stmt_list> proc_body
+%type <stmt_list> stmt_list
+%type <stmt> stmt
 
-%type <type> return_type_opt
 %type <type> type
 %type <type> literal
+%type <type> return_type_opt
 
 %start program
 
@@ -131,24 +139,23 @@ var_decl:
 
 proc_decl:
     proc_decl_signature Begin proc_body End {
+        $3->verify_return($1);
         symtab.pop();
       }
     ;
 
 proc_decl_signature:
     Procedure Identifier L_Paren paramfield_list_opt R_Paren return_type_opt {
-        auto name = *$2;
-        auto params = $4;
-        auto return_type = $6;
-
-        $$ = new ProcedureDecl(&symtab, name, params, return_type);
-        symtab.push();
-        $$->declare_params_in_scope(&symtab, params);
+        $$ = new ProcedureDecl(&symtab, *$2, $4, $6);
+        symtab.push(*$2);
+        $$->declare_params_in_scope(&symtab, $4);
       }
     ;
 
 proc_body:
-    decl_block_opt stmt_list
+    decl_block_opt stmt_list {
+        $$ = $2;
+      }
     ;
 
 decl_block_opt:
@@ -196,14 +203,12 @@ paramfield_list_opt:
 
 paramfield_list:
     paramfield_decl {
-        auto list = new ParameterField();
-        list->add($1);
-        $$ = list;
+        $$ = new ParameterField();
+        $$->add($1);
       }
     | paramfield_list Comma paramfield_decl {
-        auto list = $1;
-        list->add($3);
-        $$ = list;
+        $1->add($3);
+        $$ = $1;
       }
     ;
 
@@ -212,19 +217,27 @@ paramfield_decl:
     ;
 
 stmt_list:
-    /* empty */
-    | stmt
-    | stmt_list Semicolon stmt
+    /* empty */ {
+        $$ = new StatementList();
+      }
+    | stmt {
+        $$ = new StatementList();
+        $$->add(&symtab, $1);
+      }
+    | stmt_list Semicolon stmt {
+        $1->add(&symtab, $3);
+        $$ = $1;
+      }
     ;
 
 stmt:
-    assign_stmt
-    | if_stmt
-    | while_stmt
-    | for_stmt
-    | do_until_stmt
-    | return_stmt
-    | call_stmt
+    assign_stmt     { $$ = $1; }
+    | if_stmt       { $$ = $1; }
+    | while_stmt    { $$ = $1; }
+    | for_stmt      { $$ = $1; }
+    | do_until_stmt { $$ = $1; }
+    | return_stmt   { $$ = $1; }
+    | call_stmt     { $$ = $1; }
     ;
 
 assign_stmt:
@@ -233,29 +246,29 @@ assign_stmt:
     ;
 
 if_stmt:
-    If exp Then stmt_list else_opt Fi { $$ = new IfStatement($2); }
+    If exp Then stmt_list else_opt Fi { $$ = new IfStatement(&symtab, $2, $4, $5); }
     ;
 
 else_opt:
-    /* empty */
-    | Else stmt_list
+    /* empty */      { $$ = new StatementList(); }
+    | Else stmt_list { $$ = $2; }
     ;
 
 while_stmt:
-    While exp Do stmt_list Od { $$ = new WhileStatement($2); }
+    While exp Do stmt_list Od { $$ = new WhileStatement($2, $4); }
     ;
 
 for_stmt:
-    For Identifier Eq exp To exp Step exp Do stmt_list Od { $$ = new ForStatement(&symtab, *$2, $4, $6, $8); }
+    For Identifier Eq exp To exp Step exp Do stmt_list Od { $$ = new ForStatement(&symtab, *$2, $4, $6, $8, $10); }
     ;
 
 do_until_stmt:
-    Do stmt_list Until exp Od { $$ = new DoUntilStatement($4); }
+    Do stmt_list Until exp Od { $$ = new DoUntilStatement($4, $2); }
     ;
 
 return_stmt:
-    Return
-    | Return exp
+    Return       { $$ = new ReturnStatement(); }
+    | Return exp { $$ = new ReturnStatement($2); }
     ;
 
 call_stmt:
