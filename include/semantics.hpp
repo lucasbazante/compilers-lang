@@ -10,6 +10,10 @@
 class SemanticAction {
 public:
   bool type_ok;
+
+  bool is_ValidCoercion(TypeInfo l, TypeInfo r) {
+    return (l.b_type == BaseType::FLOAT and r.b_type == BaseType::INT);
+  }
 };
 
 class Program : public SemanticAction {
@@ -56,13 +60,15 @@ public:
     }
 
     if (decl_type.b_type != BaseType::NONE and decl_type != actual_type) {
-      std::cout << "[ERROR] Expected ´"
-                << decl_type
-                << "´, received ´"
-                << actual_type
-                << "´.\n";
+      if (not is_ValidCoercion(decl_type, actual_type)) {
+        std::cout << "[ERROR] Expected ´"
+                  << decl_type
+                  << "´, received ´"
+                  << actual_type
+                  << "´.\n";
 
-      this->type_ok = false;
+        this->type_ok = false;
+      }
     }
 
     Symbol sym(name, SymbolKind::VARIABLE, decl_type);
@@ -194,7 +200,8 @@ public:
       this->type = new TypeInfo(BaseType::NONE);
       return;
     }
-
+    
+    this->type_ok = true;
     this->type = new TypeInfo(sym->type);
   }
 
@@ -369,7 +376,7 @@ private:
         (right->b_type == BaseType::INT or right->b_type == BaseType::FLOAT))
       this->type_ok = true;
     else
-      this->type_ok = left->b_type == right->b_type;
+      this->type_ok = *left == *right;
 
     if (type_ok)
       this->type = new TypeInfo(BaseType::BOOL);
@@ -381,7 +388,7 @@ private:
                 << "` and `"
                 << *right
                 << "`. " << this->op_toString(op)
-                << " is only supported for operands of the same type (or `int` and `float`).\n";
+                << " is only supported for operands of the same type (or numeric types).\n";
       this->type = new TypeInfo(BaseType::NONE);
     }
   }
@@ -421,6 +428,15 @@ public:
       return;
     }
 
+    if (sym->kind != SymbolKind::VARIABLE and sym->kind != SymbolKind::PARAMETER) {
+      std::cerr << "[ERROR] The name `"
+                << name
+                << "` doesn't refer to a variable or a parameter.\n";
+      this->type_ok = false;
+      this->type = new TypeInfo(BaseType::NONE);
+      return;
+    }
+
     this->type_ok = true;
     this->type = &sym->type;
   }
@@ -442,7 +458,7 @@ public:
     Symbol* sym = symtab->lookup(exp->type->struct_name);
 
     if (sym == nullptr) {
-      std::cerr << "[ERROR] Invalid access to struct field: ´"
+      std::cerr << "[ERROR] Invalid struct: ´"
                 << exp->type->struct_name
                 << "´ isn't declared as a struct anywhere in this scope.\n";
 
@@ -461,9 +477,10 @@ public:
       }
     }
 
-    std::cerr << "[ERROR] Invalid access to struct field: non-existent field `"
+    std::cerr << "[ERROR] Invalid access to struct field: the field `"
               << name 
-              << "`.\n";
+              << "` doesn't exist in the struct `"
+              << exp->type->struct_name << "`.\n";
 
     this->type_ok = false;
     this->type = new TypeInfo(BaseType::NONE);
@@ -533,15 +550,17 @@ public:
       }
 
       else if (*statement->return_type != *this->return_type) {
-        std::cerr << "[ERROR] Inconsistent return types in function `"
-                    << symtab->current()->name
-                    << "`. Previously got `"
-                    << *this->return_type
-                    << "`, now got `"
-                    << *statement->return_type
-                    << "`.\n";
+        if (not is_ValidCoercion(*statement->return_type, *this->return_type)) {
+          std::cerr << "[ERROR] Inconsistent return types in function `"
+                      << symtab->current()->name
+                      << "`. Previously got `"
+                      << *this->return_type
+                      << "`, now got `"
+                      << *statement->return_type
+                      << "`.\n";
 
-        this->type_ok = false;
+          this->type_ok = false;
+        }
       }
     }
 
@@ -566,16 +585,18 @@ public:
     for (auto statement: statements)
       if (statement->has_return) { 
         if (*statement->return_type != *declaration->return_type) {
-          std::cerr << "[ERROR] Function `"
-                    << declaration->name
-                    << "` is declared to return `"
-                    << *declaration->return_type
-                    << "`, but returns `"
-                    << *statement->return_type
-                    << "`.\n";
+          if (not is_ValidCoercion(*declaration->return_type, *statement->return_type)) {
+            std::cerr << "[ERROR] Function `"
+                      << declaration->name
+                      << "` is declared to return `"
+                      << *declaration->return_type
+                      << "`, but returns `"
+                      << *statement->return_type
+                      << "`.\n";
 
-          this->type_ok = false;
-          continue;
+            this->type_ok = false;
+            continue;
+          }
         }
 
         r_type = new TypeInfo(*statement->return_type);
@@ -622,18 +643,20 @@ public:
 
     for (size_t i = 0; i < param_types.size(); ++i) {
       if (!(*arg_exprs[i]->type == param_types[i].second)) {
-        std::cerr << "[ERROR] Argument " << i + 1 << " of call to `" << f_name
-                  << "` has type `" << *arg_exprs[i]->type << "`, expected `"
-                  << param_types[i].second << "`.\n";
-        this->type_ok = false;
-        this->type = new TypeInfo(BaseType::NONE);
-        return;
+        if (not is_ValidCoercion(*arg_exprs[i]->type, param_types[i].second)) {
+          std::cerr << "[ERROR] Argument " << i + 1 << " of call to `" << f_name
+                    << "` has type `" << *arg_exprs[i]->type << "`, expected `"
+                    << param_types[i].second << "`.\n";
+          this->type_ok = false;
+          this->type = new TypeInfo(BaseType::NONE);
+          return;
+        }
       }
     }
 
     // If we reached here, the call is valid
     this->type_ok = true;
-    this->type = new TypeInfo(fun->type);  // Copy return type  }
+    this->type = new TypeInfo(fun->type);  // Copy return type
   }
 };
 
@@ -641,27 +664,31 @@ class AssignStatement : public Statement {
 public:
   AssignStatement(Variable* var, Expression* exp) {
     if (*var->type != *exp->type) {
-      std::cerr << "[ERROR] Type error on assignment: expected `"
-                << *var->type
-                << "`, got `"
-                << *exp->type
-                << "`.\n";
-      this->type_ok = false;
-      return;
+      if (not is_ValidCoercion(*var->type, *exp->type)) {
+        std::cerr << "[ERROR] Type error on assignment: expected `"
+                  << *var->type
+                  << "`, got `"
+                  << *exp->type
+                  << "`.\n";
+        this->type_ok = false;
+        return;
+      }
     }
 
     this->type_ok = var->type_ok and exp->type_ok;
   }
 
   AssignStatement(Dereference* deref, Expression* exp) {
-    if (deref->type != exp->type) {
-      std::cerr << "[ERROR] Type error on assignment: expected `"
-                << *deref->type
-                << "`, got `"
-                << *exp->type
-                << "`.\n";
-      this->type_ok = false;
-      return;
+    if (*deref->type != *exp->type) {
+      if (not is_ValidCoercion(*deref->type, *exp->type)) {
+        std::cerr << "[ERROR] Type error on assignment: expected `"
+                  << *deref->type
+                  << "`, got `"
+                  << *exp->type
+                  << "`.\n";
+        this->type_ok = false;
+        return;
+      }
     }
 
     this->type_ok = deref->type_ok and exp->type_ok;
