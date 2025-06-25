@@ -6,15 +6,19 @@ begin
 	begin
 		var d : int;
 
+		struct Exemplo {
+			x : int
+		};
+		var a : float;
+
 		procedure f(x : int, y : int) : int
 		begin
-			while x < 5 do
-				if true then return true
-				else return "true"
-				fi
-			od
+			return 1.0
 		end
 	in
-		d := 1 + f(1, 1)
+		d := 1 + f(1, 1) + 5.0;
+		a := 1
+		//a := Exemplo.x;
+		//Exemplo.x := a
 	end
 end
