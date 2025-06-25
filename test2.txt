@@ -5,17 +5,16 @@ begin
 	procedure main ()
 	begin
 		var d : int;
-		struct slaoq {
-			x : int
-		};
 
-		var b : bool := false;
-		var a := ref(b)
-		//var c : ref(bool) := a + 1
+		procedure f(x : int, y : int) : int
+		begin
+			while x < 5 do
+				if true then return true
+				else return "true"
+				fi
+			od
+		end
 	in
-		d := 1;
-
-		for d = 1 to 5 step 1.0 do od
+		d := 1 + f(1, 1)
 	end
 end
-

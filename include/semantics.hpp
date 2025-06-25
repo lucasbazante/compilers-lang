@@ -3,7 +3,6 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
-#include <typeinfo>
 #include <vector>
 
 #include "symbol_table.hpp"
@@ -124,6 +123,7 @@ public:
 class ProcedureDecl : public SemanticAction {
 public:
   std::string name;
+  TypeInfo* return_type;
 
   ProcedureDecl(SymbolTable* symtab, std::string name, ParameterField* params, TypeInfo* return_type) {
     Symbol sym(name, SymbolKind::FUNCTION, *return_type);
@@ -138,6 +138,7 @@ public:
     }
 
     this->name = name;
+    this->return_type = new TypeInfo(*return_type);
   }
 
   void declare_params_in_scope(SymbolTable* symtab, ParameterField* params) {
@@ -325,8 +326,8 @@ private:
     if (left_valid && right_valid) {
       BaseType result_type = (left->b_type == BaseType::FLOAT || right->b_type == BaseType::FLOAT) ? BaseType::FLOAT : BaseType::INT;
 
-      this->type = new TypeInfo(result_type);
       this->type_ok = true;
+      this->type = new TypeInfo(result_type);
     } else {
       std::cerr << "[ERROR] Invalid operands to "
                     << this->op_toString(op)
@@ -503,7 +504,86 @@ public:
   }
 };
 
-class Call : public SemanticAction {
+// ---- Statements ----
+
+class Statement : public SemanticAction {
+public:
+  bool has_return = false;
+  TypeInfo* return_type = new TypeInfo(BaseType::NONE);
+
+  Statement() = default;
+  virtual ~Statement() { delete return_type; }
+};
+
+class StatementList : public Statement {
+public:
+  std::vector<Statement*> statements;
+
+  StatementList() = default;
+
+  ~StatementList() {
+    for (auto s : statements) delete s;
+  }
+
+  void add(SymbolTable* symtab, Statement* statement) {
+    if (statement->has_return) {
+      if (not this->has_return) {
+        this->has_return = statement->has_return;
+        this->return_type = new TypeInfo(*statement->return_type);
+      }
+
+      else if (*statement->return_type != *this->return_type) {
+        std::cerr << "[ERROR] Inconsistent return types in function `"
+                    << symtab->current()->name
+                    << "`. Previously got `"
+                    << *this->return_type
+                    << "`, now got `"
+                    << *statement->return_type
+                    << "`.\n";
+
+        this->type_ok = false;
+      }
+    }
+
+    statements.push_back(statement);
+  }
+
+  void verify_return(ProcedureDecl* declaration) {
+    this->type_ok = true;
+
+    if (declaration->return_type->b_type != BaseType::NONE and not this->has_return) {
+      std::cerr << "[ERROR] Function `"
+                << declaration->name
+                << "` is expected to return a value of type `"
+                << *declaration->return_type
+                << "` but no return statement was found.\n";
+
+      this->type_ok = false;
+      return;
+    }
+
+    TypeInfo* r_type = nullptr;
+    for (auto statement: statements)
+      if (statement->has_return) { 
+        if (*statement->return_type != *declaration->return_type) {
+          std::cerr << "[ERROR] Function `"
+                    << declaration->name
+                    << "` is declared to return `"
+                    << *declaration->return_type
+                    << "`, but returns `"
+                    << *statement->return_type
+                    << "`.\n";
+
+          this->type_ok = false;
+          continue;
+        }
+
+        r_type = new TypeInfo(*statement->return_type);
+      }
+    }
+};
+
+class Call : public Statement {
 public:
   TypeInfo* type;
 
@@ -557,9 +637,7 @@ public:
   }
 };
 
-// ---- Statements ----
-
-class AssignStatement : public SemanticAction {
+class AssignStatement : public Statement {
 public:
   AssignStatement(Variable* var, Expression* exp) {
     if (*var->type != *exp->type) {
@@ -590,10 +668,12 @@ public:
   }
 };
 
-class ForStatement : public SemanticAction {
+class ForStatement : public Statement {
 public:
-  ForStatement(SymbolTable* symtab, std::string name, Expression* eq, Expression* to, Expression* step) {
+  ForStatement(SymbolTable* symtab, std::string name, Expression* eq, Expression* to, Expression* step, StatementList* body) {
     this->type_ok = true;
+    this->has_return = body->has_return;
+    this->return_type = body->return_type;
 
     Symbol* sym = symtab->lookup(name);
 
@@ -613,10 +693,12 @@ public:
   }
 };
 
-class WhileStatement : public SemanticAction {
+class WhileStatement : public Statement {
 public:
-  WhileStatement(Expression* condition) {
+  WhileStatement(Expression* condition, StatementList* body) {
     this->type_ok = condition->type_ok;
+    this->has_return = body->has_return;
+    this->return_type = body->return_type;
 
     if (condition->type->b_type != BaseType::BOOL) {
 
@@ -628,10 +710,12 @@ public:
   }
 };
 
-class DoUntilStatement : public SemanticAction {
+class DoUntilStatement : public Statement {
 public:
-  DoUntilStatement(Expression* condition) {
+  DoUntilStatement(Expression* condition, StatementList* body) {
     this->type_ok = condition->type_ok;
+    this->has_return = body->has_return;
+    this->return_type = body->return_type;
 
     if (condition->type->b_type != BaseType::BOOL) {
 
@@ -643,10 +727,17 @@ public:
   }
 };
 
-class IfStatement : public SemanticAction {
+class IfStatement : public Statement {
 public:
-  IfStatement(Expression* condition) {
+  IfStatement(SymbolTable* symtab, Expression* condition, StatementList* body, StatementList* else_body) {
     this->type_ok = condition->type_ok;
+    this->has_return = body->has_return;
+    this->return_type = body->return_type;
+
+    if (not else_body->statements.empty()) {
+      for (auto statement : else_body->statements)
+        body->add(symtab, statement);
+    }
 
     if (condition->type->b_type != BaseType::BOOL) {
       std::cerr << "[ERROR] The condition that defines the if statement branching must be of type `bool`."
@@ -654,5 +745,20 @@ public:
 
       this->type_ok = false;
     }
+  }
+};
+
+class ReturnStatement : public Statement {
+public:
+  ReturnStatement() {
+    this->type_ok = true;
+    this->has_return = true;
+    this->return_type = new TypeInfo(BaseType::NONE);
+  }
+
+  ReturnStatement(Expression* exp) {
+    this->type_ok = exp->type_ok;
+    this->has_return = true;
+    this->return_type = new TypeInfo(*exp->type);
   }
 };

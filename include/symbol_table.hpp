@@ -119,10 +119,11 @@ struct Symbol {
 
 class Scope {
 public:
+	std::string name;
 	Scope* parent;
 	std::unordered_map<std::string, Symbol> table;
 
-	Scope(Scope* parent = nullptr) : parent(parent) {}
+	Scope(Scope* parent = nullptr, std::string name = "program") : parent(parent), name(name) {}
 
 	bool insert(const Symbol& sym) {
 		return table.emplace(sym.name, sym).second;
@@ -152,12 +153,12 @@ private:
 
 public:
 	SymbolTable() {
-		push();
+		push("program");
 	}
 
-	void push() {
+	void push(std::string name) {
 		Scope* parent = scopes.empty() ? nullptr : scopes.back().get();
-		scopes.push_back(std::make_unique<Scope>(parent));
+		scopes.push_back(std::make_unique<Scope>(parent, name));
 	}
 
 	void pop() {
