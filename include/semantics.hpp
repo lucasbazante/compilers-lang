@@ -434,6 +434,7 @@ public:
                 << "` doesn't refer to a variable or a parameter.\n";
       this->type_ok = false;
       this->type = new TypeInfo(BaseType::NONE);
+      return;
     }
 
     this->type_ok = true;

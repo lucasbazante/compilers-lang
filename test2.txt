@@ -14,7 +14,9 @@ begin
 		procedure f(x : int, y : int) : int
 		begin
 			return 1.0
-		end
+		end;
+
+		var xx : ref(int) := ref(f)
 	in
 		d := 1 + f(1, 1) + 5.0;
 		a := 1
