@@ -3,13 +3,13 @@ program example
 begin
 	procedure main ()
 	begin
-        struct Exemplo {
-            x : int
-        };
-        var exemplo : Exemplo := new Exemplo;
-        var a : int;
+            struct Exemplo {
+                x : float
+            };
+            var exemplo : Exemplo := new Exemplo;
+            var a : int
 	in
-        a := exemplo.x;
-        exemplo.x := a
+            a := exemplo.x;
+            exemplo.x := a
 	end
 end

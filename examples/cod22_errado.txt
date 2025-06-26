@@ -4,8 +4,8 @@ begin
 	procedure main ()
 	begin
 		var a : bool := false;
-        var b := a;
-        var c : int := b
+		var b := a;
+		var c : int := b
 	in
 	end
 end

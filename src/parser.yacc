@@ -367,12 +367,12 @@ exp:
           auto rhs = $3;
           $$ = new Expression(lhs->type, Expression::Operator::POW, rhs->type);
       }
-    | literal             { $$ = new Expression($1); }
-    | call_stmt           { auto call = $1; $$ = new Expression(call->type); }
+    | literal             { $$ = new Expression($1, true); }
+    | call_stmt           { auto call = $1; $$ = new Expression(call->type, call->type_ok); }
     | New Identifier      { $$ = new Expression(&symtab, *$2); }
-    | var                 { auto v = $1; $$ = new Expression(v->type); }
-    | ref_var             { auto ref = $1; $$ = new Expression(ref->type); }
-    | deref_var           { auto deref = $1; $$ = new Expression(deref->type); }
+    | var                 { auto v = $1; $$ = new Expression(v->type, v->type_ok); }
+    | ref_var             { auto ref = $1; $$ = new Expression(ref->type, ref->type_ok); }
+    | deref_var           { auto deref = $1; $$ = new Expression(deref->type, deref->type_ok); }
     | L_Paren exp R_Paren { $$ = $2; }
     ;
 

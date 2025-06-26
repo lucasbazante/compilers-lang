@@ -3,9 +3,9 @@ program example
 begin
 	procedure main ()
 	begin
-        var a : ref(int)
+		var a : ref(int)
 	in
-        for a = 0 to 5 step 1 do
-        od
+		for a = 0 to 5 step 1 do
+		od
 	end
 end

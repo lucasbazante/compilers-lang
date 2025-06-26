@@ -3,7 +3,7 @@ program example
 begin
 	procedure main ()
 	begin
-		var a : float := 1 + 1.0
+		var a : int := 1 + 1.0
 	in
 	end
 end

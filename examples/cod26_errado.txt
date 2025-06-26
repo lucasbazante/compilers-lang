@@ -4,12 +4,12 @@ program example
 begin
 	procedure main ()
 	begin
-        var a : string := "oi";
-        var b : int := 2
+            var a : string := "oi";
+            var b : int := 2
 	in
-        do
-            b := b + 1
-        until b < a
-        od
+            do
+                b := b + 1
+            until b < a
+            od
 	end
 end

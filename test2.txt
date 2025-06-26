@@ -4,20 +4,21 @@ program exprInWhile
 begin
 	procedure main ()
 	begin
-		var d : int;
+		var d : float;
 
 		struct Exemplo {
-			x : string
+			x : int
 		};
 
 		var ex : Exemplo;
 
-		procedure f(x : float) : int
+		procedure f(x : float) : float
 		begin
 		in
-			return x + ex.x
+			return "float"
 		end
 	
 	in
+		d := 5 + f(5.5)
 	end
 end
