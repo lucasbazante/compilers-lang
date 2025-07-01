@@ -5,12 +5,12 @@
 #include <iostream>
 
 #include "lexer.hpp"
-#include "symbol_table.hpp"
+#include "state.hpp"
 
 void yyerror(const char *s);
 int yylex(void);
 
-SymbolTable symtab;
+State St;
 
 %}
 
@@ -103,9 +103,9 @@ SymbolTable symtab;
 
 program:
     Program Identifier Begin {
-        symtab = SymbolTable();
     } decl_list_opt End {
-        symtab.pop();
+        // nothing for now
+        // must call the output_file function after
     }
     ;
 
@@ -126,29 +126,29 @@ decl:
     ;
 
 var_decl:
-    Var Identifier Colon type { $$ = new VarDecl(&symtab, *$2, *$4); }
+    Var Identifier Colon type { $$ = new VarDecl(&St, *$2, *$4); }
     | Var Identifier Colon type Assign exp {
         auto actual_type = *$6->type;
-        $$ = new VarDecl(&symtab, *$2, *$4, actual_type);
+        $$ = new VarDecl(&St, *$2, *$4, actual_type);
       }
     | Var Identifier Assign exp {
         auto exp_type = *$4->type;
-        $$ = new VarDecl(&symtab, *$2, exp_type);
+        $$ = new VarDecl(&St, *$2, exp_type);
       }
     ;
 
 proc_decl:
     proc_decl_signature Begin proc_body End {
         $3->verify_return($1);
-        symtab.pop();
+        St.Table()->pop();
       }
     ;
 
 proc_decl_signature:
     Procedure Identifier L_Paren paramfield_list_opt R_Paren return_type_opt {
-        $$ = new ProcedureDecl(&symtab, *$2, $4, $6);
-        symtab.push(*$2);
-        $$->declare_params_in_scope(&symtab, $4);
+        $$ = new ProcedureDecl(&St, *$2, $4, $6);
+        St.Table()->push(*$2);
+        $$->declare_params_in_scope(&St, $4);
       }
     ;
 
@@ -170,7 +170,7 @@ decl_block:
 
 rec_decl:
     Struct Identifier L_Bracket paramfield_decl_list_opt R_Bracket {
-        $$ = new StructDecl(&symtab, *$2, $4);
+        $$ = new StructDecl(&St, *$2, $4);
     }
     ;
 
@@ -222,10 +222,10 @@ stmt_list:
       }
     | stmt {
         $$ = new StatementList();
-        $$->add(&symtab, $1);
+        $$->add(&St, $1);
       }
     | stmt_list Semicolon stmt {
-        $1->add(&symtab, $3);
+        $1->add(&St, $3);
         $$ = $1;
       }
     ;
@@ -246,7 +246,7 @@ assign_stmt:
     ;
 
 if_stmt:
-    If exp Then stmt_list else_opt Fi { $$ = new IfStatement(&symtab, $2, $4, $5); }
+    If exp Then stmt_list else_opt Fi { $$ = new IfStatement(&St, $2, $4, $5); }
     ;
 
 else_opt:
@@ -259,7 +259,7 @@ while_stmt:
     ;
 
 for_stmt:
-    For Identifier Eq exp To exp Step exp Do stmt_list Od { $$ = new ForStatement(&symtab, *$2, $4, $6, $8, $10); }
+    For Identifier Eq exp To exp Step exp Do stmt_list Od { $$ = new ForStatement(&St, *$2, $4, $6, $8, $10); }
     ;
 
 do_until_stmt:
@@ -272,7 +272,7 @@ return_stmt:
     ;
 
 call_stmt:
-    Identifier L_Paren exp_list_opt R_Paren { $$ = new Call(&symtab, *$1, $3); }
+    Identifier L_Paren exp_list_opt R_Paren { $$ = new Call(&St, *$1, $3); }
     ;
 
 exp_list_opt:
@@ -369,7 +369,7 @@ exp:
       }
     | literal             { $$ = new Expression($1, true); }
     | call_stmt           { auto call = $1; $$ = new Expression(call->type, call->type_ok); }
-    | New Identifier      { $$ = new Expression(&symtab, *$2); }
+    | New Identifier      { $$ = new Expression(&St, *$2); }
     | var                 { auto v = $1; $$ = new Expression(v->type, v->type_ok); }
     | ref_var             { auto ref = $1; $$ = new Expression(ref->type, ref->type_ok); }
     | deref_var           { auto deref = $1; $$ = new Expression(deref->type, deref->type_ok); }
@@ -377,8 +377,8 @@ exp:
     ;
 
 var:
-    Identifier           { $$ = new Variable(&symtab, *$1); }
-    | exp Dot Identifier { $$ = new Variable(&symtab, $1, *$3); }
+    Identifier           { $$ = new Variable(&St, *$1); }
+    | exp Dot Identifier { $$ = new Variable(&St, $1, *$3); }
     ;
 
 ref_var:

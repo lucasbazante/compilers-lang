@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "symbol_table.hpp"
+#include "state.hpp"
 
 /*
  * Base class for the semantic actions.
@@ -49,11 +49,11 @@ public:
    * exists (it can be non-existent in cases of structs!), checking if the symbol is already declared,
    * inserting it if correctly defined, and so on.
   */
-  VarDecl(SymbolTable* sb, std::string name, TypeInfo decl_type) {
+  VarDecl(State* St, std::string name, TypeInfo decl_type) {
     this->type_ok = true;
 
     // Checking if type exists, in case of an invalid struct.
-    if (not decl_type.struct_name.empty() and not sb->lookup(decl_type.struct_name)) {
+    if (not decl_type.struct_name.empty() and not St->Table()->lookup(decl_type.struct_name)) {
         std::cout << "[ERROR] In variable ´"
                   << name << "` declaration: `"
                   << decl_type.struct_name << "´ is not a declared type in the current scope.\n";
@@ -65,7 +65,7 @@ public:
 
     // If we could not insert, it means that there is already a symbol declared
     // in the same scope.
-    if (not sb->insert(sym)) {
+    if (not St->Table()->insert(sym)) {
       std::cout << "[ERROR] In variable ´"
                 << name << "´ declaration: symbol `"
                 << name << "` is already declared in the current scope.\n";
@@ -80,11 +80,11 @@ public:
    * It checks if the expected type is the same as the actual type (the type of the expression), or if
    * it's a valid coercion, and inserts the symbol if it's not already defined.
    */
-  VarDecl(SymbolTable* sb, std::string name, TypeInfo decl_type, TypeInfo actual_type) {
+  VarDecl(State* St, std::string name, TypeInfo decl_type, TypeInfo actual_type) {
     this->type_ok = true;
 
     // Checking if type is a valid type in case of it being a struct type.
-    if (not decl_type.struct_name.empty() and not sb->lookup(decl_type.struct_name)) {
+    if (not decl_type.struct_name.empty() and not St->Table()->lookup(decl_type.struct_name)) {
         std::cout << "[ERROR] In variable ´"
                   << name << "` declaration: `"
                   << decl_type.struct_name << "´ is not a declared type in the current scope.\n";
@@ -109,7 +109,7 @@ public:
     Symbol sym(name, SymbolKind::VARIABLE, decl_type);
 
     // If we could not insert the symbol, it is already declared under the current scope.
-    if (not sb->insert(sym)) {
+    if (not St->Table()->insert(sym)) {
       std::cout << "[ERROR] In variable ´"
                 << name << "´ declaration: symbol `"
                 << name << "` is already declared in the current scope.\n";
@@ -177,7 +177,7 @@ public:
    * Then it tries to add the type to the symbol table, registering an error
    * in case we already have a symbol with the same name declared.
    */
-  StructDecl(SymbolTable* symtab, std::string name, ParameterField* fields) {
+  StructDecl(State* St, std::string name, ParameterField* fields) {
     this->type_ok = true;
 
     TypeInfo struct_type(BaseType::STRUCT, name);
@@ -190,7 +190,7 @@ public:
     }
 
     // Try to add, flag error if it already exists.
-    if (not symtab->insert(symbol)) {
+    if (not St->Table()->insert(symbol)) {
       std::cerr << "[ERROR] In struct `"
                 << name
                 << "` declaration: the symbol `" << name << "` is already declared in the current scope.\n";
@@ -223,7 +223,7 @@ public:
    *
    * It builds the symbol for the function, register all of it's parameters and tries to push it into the symbol table.
    */
-  ProcedureDecl(SymbolTable* symtab, std::string name, ParameterField* params, TypeInfo* return_type) {
+  ProcedureDecl(State* St, std::string name, ParameterField* params, TypeInfo* return_type) {
     this->type_ok = true;
 
     Symbol sym(name, SymbolKind::FUNCTION, *return_type);
@@ -232,7 +232,7 @@ public:
     for (auto param : params->fields)
       sym.parameters.push_back({param->name, *param->type});
 
-    if (not symtab->insert(sym)) {
+    if (not St->Table()->insert(sym)) {
       std::cerr << "[ERROR] In declaration of procedure `"
                 << name
                 << "`: symbol `"
@@ -254,14 +254,14 @@ public:
    * The action of pushing a new scope into the table is done in the yacc parser,
    * and this method is called in sequence.
    */
-  void declare_params_in_scope(SymbolTable* symtab, ParameterField* params) {
+  void declare_params_in_scope(State* St, ParameterField* params) {
     for (auto param : params->fields) {
       Symbol sym(param->name, SymbolKind::PARAMETER, *param->type);
 
       // If we can't insert the symbol, it means there are two
       // or more parameters with the same name, since its a fresh scope
       // with no other symbols other than the parameters at this point.
-      if (not symtab->insert(sym)) {
+      if (not St->Table()->insert(sym)) {
         std::cerr << "[ERROR] Redeclaration of parameter `"
                   << sym.name
                   << "` in procedure `"
@@ -332,8 +332,8 @@ public:
    *
    * It receives the symbol table and the name to do so.
    */
-  Expression(SymbolTable* symtab, std::string name) {
-    Symbol* sym = symtab->lookup(name);
+  Expression(State* St, std::string name) {
+    Symbol* sym = St->Table()->lookup(name);
     
     if (sym == nullptr) {
       std::cerr << "[ERROR] Invalid struct instantiation: `"
@@ -669,8 +669,8 @@ public:
    *
    * As always, in case of errors the type will be set to `NONE`.
    */
-  Variable(SymbolTable* symtab, std::string name) {
-    Symbol* sym = symtab->lookup(name);
+  Variable(State* St, std::string name) {
+    Symbol* sym = St->Table()->lookup(name);
 
     // Is it declared in any way?
     if (sym == nullptr) {
@@ -707,7 +707,7 @@ public:
    *
    * Lastly, we check if the field we're acessing really is a field from our struct.
    */
-  Variable(SymbolTable* symtab, Expression* exp, std::string name) {
+  Variable(State* St, Expression* exp, std::string name) {
     if (exp->type->b_type != BaseType::STRUCT) {
       std::cerr << "[ERROR] Trying to use dot notation on a non-struct object.\n";
 
@@ -717,7 +717,7 @@ public:
       return;
     }
     
-    Symbol* sym = symtab->lookup(exp->type->struct_name);
+    Symbol* sym = St->Table()->lookup(exp->type->struct_name);
 
     if (sym == nullptr) {
       std::cerr << "[ERROR] Invalid struct: ´"
@@ -879,7 +879,7 @@ public:
    * This is the approach chosen for this compiler, so to avoid incosistent returns in
    * nested blocks and branching.
    */
-  void add(SymbolTable* symtab, Statement* statement) {
+  void add(State* St, Statement* statement) {
     if (statement->has_return) {
       // If this body has no return, set.
       if (not this->has_return) {
@@ -891,7 +891,7 @@ public:
       else if (*statement->return_type != *this->return_type) {
         if (not is_ValidCoercion(*statement->return_type, *this->return_type)) {
           std::cerr << "[ERROR] Inconsistent return types in function `"
-                      << symtab->current()->name
+                      << St->Table()->current()->name
                       << "`. Previously got `"
                       << *this->return_type
                       << "`, now got `"
@@ -976,8 +976,8 @@ public:
   /*
    * This constructor is the only one and implements the semantic actions described above.
    */
-  Call(SymbolTable* symtab, std::string f_name, ExpressionList* exp_list) {
-    Symbol* fun = symtab->lookup(f_name);
+  Call(State* St, std::string f_name, ExpressionList* exp_list) {
+    Symbol* fun = St->Table()->lookup(f_name);
 
     // Check if the callee exists.
     if (fun == nullptr) {
@@ -1108,12 +1108,12 @@ public:
  */
 class ForStatement : public Statement {
 public:
-  ForStatement(SymbolTable* symtab, std::string name, Expression* eq, Expression* to, Expression* step, StatementList* body) {
+  ForStatement(State* St, std::string name, Expression* eq, Expression* to, Expression* step, StatementList* body) {
     this->type_ok = true;
     this->has_return = body->has_return; // If the body has return, this statement also has.
     this->return_type = body->return_type; // The return type of this statement is the return type of its body.
 
-    Symbol* sym = symtab->lookup(name);
+    Symbol* sym = St->Table()->lookup(name);
 
     // Check if the counter variable exists.
     if (sym == nullptr) {
@@ -1203,14 +1203,14 @@ public:
  */
 class IfStatement : public Statement {
 public:
-  IfStatement(SymbolTable* symtab, Expression* condition, StatementList* body, StatementList* else_body) {
+  IfStatement(State* St, Expression* condition, StatementList* body, StatementList* else_body) {
     this->type_ok = condition->type_ok;
     this->has_return = body->has_return;
     this->return_type = body->return_type;
 
     if (not else_body->statements.empty()) {
       for (auto statement : else_body->statements)
-        body->add(symtab, statement);
+        body->add(St, statement);
     }
 
     if (condition->type->b_type != BaseType::BOOL) {
