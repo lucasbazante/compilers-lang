@@ -5,12 +5,12 @@
 #include <iostream>
 
 #include "lexer.hpp"
-#include "symbol_table.hpp"
+#include "state.hpp"
 
 void yyerror(const char *s);
 int yylex(void);
 
-SymbolTable symtab;
+State St;
 
 %}
 
@@ -20,7 +20,28 @@ SymbolTable symtab;
 }
 
 %union {
-    SemanticAction* action;
+    // Complex types: necessary actions
+    VarDecl* var_decl;
+    ParameterDecl* parameter_decl;
+    ParameterField* parameter_field;
+    StructDecl* struct_decl;
+    ProcedureDecl* procedure_decl;
+    Expression* expression;
+    ExpressionList* expression_list;
+    Variable* variable;
+    Reference* reference;
+    Dereference* dereference;
+    Call* call;
+    AssignStatement* assign_stmt;
+    ForStatement* for_stmt;
+    WhileStatement* while_stmt;
+    DoUntilStatement* do_until_stmt;
+    IfStatement* if_stmt;
+    ReturnStatement* return_stmt;
+    Statement* stmt;
+    StatementList* stmt_list;
+
+    // Less complicated types: no action besides the basic
     std::string* name;
     TypeInfo* type;
 }
@@ -44,15 +65,37 @@ SymbolTable symtab;
 %left Dot
 %left UMINUS
 
-%type <action> var_decl
-%type <action> rec_decl
-%type <action> exp
-%type <action> var
-%type <action> paramfield_decl
-%type <action> paramfield_decl_list
-%type <action> paramfield_decl_list_opt
+%type <var_decl> var_decl
+%type <parameter_decl> paramfield_decl
+%type <parameter_field> paramfield_decl_list
+%type <parameter_field> paramfield_decl_list_opt
+%type <parameter_field> paramfield_list
+%type <parameter_field> paramfield_list_opt
+%type <procedure_decl> proc_decl_signature
+%type <struct_decl> rec_decl
+
+%type <expression> exp
+%type <expression_list> exp_list
+%type <expression_list> exp_list_opt
+%type <variable> var
+%type <reference> ref_var
+%type <dereference> deref_var
+
+%type <call> call_stmt
+%type <assign_stmt> assign_stmt
+%type <for_stmt> for_stmt
+%type <while_stmt> while_stmt
+%type <do_until_stmt> do_until_stmt
+%type <if_stmt> if_stmt
+%type <stmt_list> else_opt
+%type <return_stmt> return_stmt
+%type <stmt_list> proc_body
+%type <stmt_list> stmt_list
+%type <stmt> stmt
+
 %type <type> type
 %type <type> literal
+%type <type> return_type_opt
 
 %start program
 
@@ -60,9 +103,9 @@ SymbolTable symtab;
 
 program:
     Program Identifier Begin {
-        symtab = SymbolTable();
     } decl_list_opt End {
-        symtab.pop();
+        // nothing for now
+        // must call the output_file function after
     }
     ;
 
@@ -83,23 +126,36 @@ decl:
     ;
 
 var_decl:
-    Var Identifier Colon type { $$ = new VarDecl(&symtab, *$2, *$4); }
+    Var Identifier Colon type { $$ = new VarDecl(&St, *$2, *$4); }
     | Var Identifier Colon type Assign exp {
-        auto actual_type = *static_cast<Expression*>($6)->type;
-        $$ = new VarDecl(&symtab, *$2, *$4, actual_type);
+        auto actual_type = *$6->type;
+        $$ = new VarDecl(&St, *$2, *$4, actual_type);
       }
     | Var Identifier Assign exp {
-        auto exp_type = *static_cast<Expression*>($4)->type;
-        $$ = new VarDecl(&symtab, *$2, exp_type);
+        auto exp_type = *$4->type;
+        $$ = new VarDecl(&St, *$2, exp_type);
       }
     ;
 
 proc_decl:
-    Procedure Identifier L_Paren paramfield_list_opt R_Paren return_type_opt Begin proc_body End
+    proc_decl_signature Begin proc_body End {
+        $3->verify_return($1);
+        St.Table()->pop();
+      }
+    ;
+
+proc_decl_signature:
+    Procedure Identifier L_Paren paramfield_list_opt R_Paren return_type_opt {
+        $$ = new ProcedureDecl(&St, *$2, $4, $6);
+        St.Table()->push(*$2);
+        $$->declare_params_in_scope(&St, $4);
+      }
     ;
 
 proc_body:
-    decl_block_opt stmt_list
+    decl_block_opt stmt_list {
+        $$ = $2;
+      }
     ;
 
 decl_block_opt:
@@ -114,7 +170,7 @@ decl_block:
 
 rec_decl:
     Struct Identifier L_Bracket paramfield_decl_list_opt R_Bracket {
-        $$ = new StructDecl(&symtab, *$2, static_cast<ParameterField*>($4));
+        $$ = new StructDecl(&St, *$2, $4);
     }
     ;
 
@@ -126,24 +182,34 @@ paramfield_decl_list_opt:
 paramfield_decl_list:
     paramfield_decl {
         auto list = new ParameterField();
-        list->add(static_cast<ParameterDecl*>($1));
+        list->add($1);
         $$ = list;
       }
     | paramfield_decl_list Semicolon paramfield_decl {
-        auto list = static_cast<ParameterField*>($1);
-        list->add(static_cast<ParameterDecl*>($3));
+        auto list = $1;
+        list->add($3);
         $$ = list;
       }
     ;
 
 paramfield_list_opt:
-    /* empty */
-    | paramfield_list
+    /* empty */ {
+        $$ = new ParameterField();
+      }
+    | paramfield_list {
+        $$ = $1;
+      }
     ;
 
 paramfield_list:
-    paramfield_decl
-    | paramfield_list Comma paramfield_decl
+    paramfield_decl {
+        $$ = new ParameterField();
+        $$->add($1);
+      }
+    | paramfield_list Comma paramfield_decl {
+        $1->add($3);
+        $$ = $1;
+      }
     ;
 
 paramfield_decl:
@@ -151,160 +217,183 @@ paramfield_decl:
     ;
 
 stmt_list:
-    /* empty */
-    | stmt
-    | stmt_list Semicolon stmt
+    /* empty */ {
+        $$ = new StatementList();
+      }
+    | stmt {
+        $$ = new StatementList();
+        $$->add(&St, $1);
+      }
+    | stmt_list Semicolon stmt {
+        $1->add(&St, $3);
+        $$ = $1;
+      }
     ;
 
 stmt:
-    assign_stmt
-    | if_stmt
-    | while_stmt
-    | for_stmt
-    | do_until_stmt
-    | return_stmt
-    | call_stmt
+    assign_stmt     { $$ = $1; }
+    | if_stmt       { $$ = $1; }
+    | while_stmt    { $$ = $1; }
+    | for_stmt      { $$ = $1; }
+    | do_until_stmt { $$ = $1; }
+    | return_stmt   { $$ = $1; }
+    | call_stmt     { $$ = $1; }
     ;
 
 assign_stmt:
-    var Assign exp
-    | deref_var Assign exp
+    var Assign exp { $$ = new AssignStatement($1, $3); }
+    | deref_var Assign exp { $$ = new AssignStatement($1, $3); }
     ;
 
 if_stmt:
-    If exp Then stmt_list else_opt Fi
+    If exp Then stmt_list else_opt Fi { $$ = new IfStatement(&St, $2, $4, $5); }
     ;
 
 else_opt:
-    /* empty */
-    | Else stmt_list
+    /* empty */      { $$ = new StatementList(); }
+    | Else stmt_list { $$ = $2; }
     ;
 
 while_stmt:
-    While exp Do stmt_list Od
+    While exp Do stmt_list Od { $$ = new WhileStatement($2, $4); }
     ;
 
 for_stmt:
-    For Identifier Eq exp To exp Step exp Do stmt_list Od
+    For Identifier Eq exp To exp Step exp Do stmt_list Od { $$ = new ForStatement(&St, *$2, $4, $6, $8, $10); }
     ;
 
 do_until_stmt:
-    Do stmt_list Until exp Od
+    Do stmt_list Until exp Od { $$ = new DoUntilStatement($4, $2); }
     ;
 
 return_stmt:
-    Return
-    | Return exp
+    Return       { $$ = new ReturnStatement(); }
+    | Return exp { $$ = new ReturnStatement($2); }
     ;
 
 call_stmt:
-    Identifier L_Paren exp_list_opt R_Paren
+    Identifier L_Paren exp_list_opt R_Paren { $$ = new Call(&St, *$1, $3); }
     ;
 
 exp_list_opt:
-    /* empty */
-    | exp_list
+    /* empty */ { $$ = new ExpressionList(); }
+    | exp_list { $$ = $1; }
     ;
 
 exp_list:
-    exp
-    | exp_list Comma exp
+    exp {
+        auto list = new ExpressionList();
+        list->add($1);
+        $$ = list;
+      }
+    | exp_list Comma exp {
+        auto list = $1;
+        list->add($3);
+        $$ = list;
+      }
     ;
 
 exp:
     exp And exp {
-          auto lhs = static_cast<Expression*>($1);
-          auto rhs = static_cast<Expression*>($3);
+          auto lhs = $1;
+          auto rhs = $3;
           $$ = new Expression(lhs->type, Expression::Operator::AND, rhs->type);
       }
     | exp Or exp {
-          auto lhs = static_cast<Expression*>($1);
-          auto rhs = static_cast<Expression*>($3);
+          auto lhs = $1;
+          auto rhs = $3;
           $$ = new Expression(lhs->type, Expression::Operator::OR, rhs->type);
       }
     | Not exp {
-          auto expr = static_cast<Expression*>($2);
+          auto expr = $2;
           $$ = new Expression(Expression::Operator::NOT, expr->type);
       }
     | exp Lt exp {
-          auto lhs = static_cast<Expression*>($1);
-          auto rhs = static_cast<Expression*>($3);
+          auto lhs = $1;
+          auto rhs = $3;
           $$ = new Expression(lhs->type, Expression::Operator::LT, rhs->type);
       }
     | exp Gt exp {
-          auto lhs = static_cast<Expression*>($1);
-          auto rhs = static_cast<Expression*>($3);
+          auto lhs = $1;
+          auto rhs = $3;
           $$ = new Expression(lhs->type, Expression::Operator::GT, rhs->type);
       }
     | exp Leq exp {
-          auto lhs = static_cast<Expression*>($1);
-          auto rhs = static_cast<Expression*>($3);
+          auto lhs = $1;
+          auto rhs = $3;
           $$ = new Expression(lhs->type, Expression::Operator::LEQ, rhs->type);
       }
     | exp Geq exp {
-          auto lhs = static_cast<Expression*>($1);
-          auto rhs = static_cast<Expression*>($3);
+          auto lhs = $1;
+          auto rhs = $3;
           $$ = new Expression(lhs->type, Expression::Operator::GEQ, rhs->type);
       }
     | exp Eq exp {
-          auto lhs = static_cast<Expression*>($1);
-          auto rhs = static_cast<Expression*>($3);
+          auto lhs = $1;
+          auto rhs = $3;
           $$ = new Expression(lhs->type, Expression::Operator::EQ, rhs->type);
       }
     | exp Neq exp {
-          auto lhs = static_cast<Expression*>($1);
-          auto rhs = static_cast<Expression*>($3);
+          auto lhs = $1;
+          auto rhs = $3;
           $$ = new Expression(lhs->type, Expression::Operator::NEQ, rhs->type);
       }
     | Minus exp %prec UMINUS {
-        $$ = new Expression(BaseType::INT);
+        auto expr = $2;
+        $$ = new Expression(Expression::Operator::NEGATE, expr->type);
       }
     | exp Plus exp {
-          auto lhs = static_cast<Expression*>($1);
-          auto rhs = static_cast<Expression*>($3);
+          auto lhs = $1;
+          auto rhs = $3;
           $$ = new Expression(lhs->type, Expression::Operator::PLUS, rhs->type);
       }
     | exp Minus exp {
-          auto lhs = static_cast<Expression*>($1);
-          auto rhs = static_cast<Expression*>($3);
+          auto lhs = $1;
+          auto rhs = $3;
           $$ = new Expression(lhs->type, Expression::Operator::MINUS, rhs->type);
       }
     | exp Divides exp {
-          auto lhs = static_cast<Expression*>($1);
-          auto rhs = static_cast<Expression*>($3);
+          auto lhs = $1;
+          auto rhs = $3;
           $$ = new Expression(lhs->type, Expression::Operator::DIVIDES, rhs->type);
       }
     | exp Times exp {
-          auto lhs = static_cast<Expression*>($1);
-          auto rhs = static_cast<Expression*>($3);
+          auto lhs = $1;
+          auto rhs = $3;
           $$ = new Expression(lhs->type, Expression::Operator::TIMES, rhs->type);
       }
     | exp Pow exp {
-          auto lhs = static_cast<Expression*>($1);
-          auto rhs = static_cast<Expression*>($3);
+          auto lhs = $1;
+          auto rhs = $3;
           $$ = new Expression(lhs->type, Expression::Operator::POW, rhs->type);
       }
-    | literal             { $$ = new Expression($1); }
-    | call_stmt           { $$ = new Expression(); }
-    | New Identifier      { $$ = new Expression(&symtab, *$2); }
-    | var                 { auto v_type = static_cast<Variable*>($1); $$ = new Expression(v_type->type); }
-    | ref_var             { $$ = new Expression(); }
-    | deref_var           { $$ = new Expression(); }
-    | L_Paren exp R_Paren { $$ = static_cast<Expression*>($2); }
+    | literal             { $$ = new Expression($1, true); }
+    | call_stmt           { auto call = $1; $$ = new Expression(call->type, call->type_ok); }
+    | New Identifier      { $$ = new Expression(&St, *$2); }
+    | var                 { auto v = $1; $$ = new Expression(v->type, v->type_ok); }
+    | ref_var             { auto ref = $1; $$ = new Expression(ref->type, ref->type_ok); }
+    | deref_var           { auto deref = $1; $$ = new Expression(deref->type, deref->type_ok); }
+    | L_Paren exp R_Paren { $$ = $2; }
     ;
 
 var:
-    Identifier           { $$ = new Variable(&symtab, *$1); }
-    | exp Dot Identifier { $$ = new Variable(&symtab, static_cast<Expression*>($1), *$3); }
+    Identifier           { $$ = new Variable(&St, *$1); }
+    | exp Dot Identifier { $$ = new Variable(&St, $1, *$3); }
     ;
 
 ref_var:
-    Ref L_Paren var R_Paren
+    Ref L_Paren var R_Paren { $$ = new Reference($3->type); }
     ;
 
 deref_var:
-    Deref L_Paren var R_Paren
-    | Deref L_Paren deref_var R_Paren
+    Deref L_Paren var R_Paren {
+        auto v = $3;
+        $$ = new Dereference(v->type);
+      }
+    | Deref L_Paren deref_var R_Paren {
+        auto deref = $3;
+        $$ = new Dereference(deref->type);
+    }
     ;
 
 literal:
@@ -325,8 +414,8 @@ type:
     ;
 
 return_type_opt:
-    /* empty */
-    | Colon type
+    /* empty */  { $$ = new TypeInfo(BaseType::NONE); }
+    | Colon type { $$ = $2; }
     ;
 
 %%

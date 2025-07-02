@@ -1,0 +1,15 @@
+// Atribuição envolvendo struct
+program example
+begin
+	procedure main ()
+	begin
+            struct Exemplo {
+                x : float
+            };
+            var exemplo : Exemplo := new Exemplo;
+            var a : int
+	in
+            a := exemplo.x;
+            exemplo.x := a
+	end
+end

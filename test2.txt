@@ -1,0 +1,24 @@
+
+// Expressão solta no while
+program exprInWhile
+begin
+	procedure main ()
+	begin
+		var d : float;
+
+		struct Exemplo {
+			x : int
+		};
+
+		var ex : Exemplo;
+
+		procedure f(x : float) : float
+		begin
+		in
+			return "float"
+		end
+	
+	in
+		d := 5 + f(5.5)
+	end
+end

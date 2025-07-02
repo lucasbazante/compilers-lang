@@ -94,13 +94,29 @@ return { return yytokentype::Return; }
 
 {D}+			    { return yytokentype::Int_L; }
 ({D}+"."{D}+)(e[+-]{D}{D})? { return yytokentype::Float_L; }
-\".\"			    { return yytokentype::String_L; }
+\".*\"			    { return yytokentype::String_L; }
 true|false		    { return yytokentype::Bool_L; }
 null			    { return yytokentype::Null; }
 
 {L}({L_}|{D})* { yylval.name = new std::string(yytext); return yytokentype::Identifier; }
 
-\n        { yycolumn = 1; prev_col = 1; }
-.	  { }
+
+[ \t\r\b]+ { }
+\n	   { yycolumn = 1; prev_col = 1; }
+
+. { char c = yytext[0];
+    if (isprint(c)) {
+	std::cerr << "Lexical error: invalid character '" << c
+		  << "' at line " << yylineno
+		  << ", column " << yycolumn
+		  << ".\n";
+    } else {
+	std::cerr << "Lexical error: invalid character (ASCII "
+		  << (int)(unsigned char)c
+		  << ") at line " << yylineno
+		  << ", column " << yycolumn
+		  << ".\n";
+    }
+  }
 
 %%
