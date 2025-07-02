@@ -18,6 +18,7 @@
 class SemanticAction {
 public:
   bool type_ok;
+  std::string gen;
 
   /*
    * Helper method for a very commons situation: checking if
@@ -26,6 +27,11 @@ public:
    */
   bool is_ValidCoercion(TypeInfo l, TypeInfo r) {
     return (l.b_type == BaseType::FLOAT and r.b_type == BaseType::INT);
+  }
+
+  void emit(std::string text) {
+    this->gen = text;
+    std::cout << this->gen << '\n';
   }
 };
 
@@ -322,7 +328,7 @@ public:
    */
   Expression(TypeInfo* type, bool ok)
     : type(type)
-  { this->type_ok = ok; }
+  { this->type_ok = ok; this->emit(yytext);}
 
   /*
    * This constructor handles the case of instantiating a struct with the `new name` pattern.
@@ -356,12 +362,12 @@ public:
    *
    * It then type checks the expression according to the rules below.
    */
-  Expression(Operator op, TypeInfo* operand) {
+  Expression(Operator op, Expression* operand) {
     switch (op) {
         // If its a `not`, the operand must be of type `bool`,
         // else we got ourselves a type error.
         case Operator::NOT:
-          this->type_ok = operand->b_type == BaseType::BOOL;
+          this->type_ok = operand->type->b_type == BaseType::BOOL;
 
           if (this->type_ok)
             this->type = new TypeInfo(BaseType::BOOL);
@@ -373,11 +379,11 @@ public:
         // In case of an unary minus, the operand must be
         // either one of the numeric types.
         case Operator::NEGATE:
-          this->type_ok = operand->b_type == BaseType::INT
-                  or operand->b_type == BaseType::FLOAT;
+          this->type_ok = operand->type->b_type == BaseType::INT
+                  or operand->type->b_type == BaseType::FLOAT;
 
           if (this->type_ok)
-            this->type = new TypeInfo(operand->b_type);
+            this->type = new TypeInfo(operand->type->b_type);
           else
             this->type = new TypeInfo(BaseType::NONE);
 
@@ -389,6 +395,8 @@ public:
             this->type_ok = false;
             this->type = new TypeInfo(BaseType::NONE);
     }
+
+    this->emit( "(" + op_toString_exp(op) + operand->gen + ")");
   }
 
   /*
@@ -402,32 +410,33 @@ public:
    * Since each of these cases of expressions involves different type checking mechanisms,
    * it's good to handle them separately, keeping the code organized and decoupled.
    */
-  Expression(TypeInfo* left, Operator op, TypeInfo* right) {
+  Expression(Expression* left, Operator op, Expression* right) {
     switch (op) {
       case Operator::AND:
       case Operator::OR:
-        this->typeCheck_Logical(left, op, right);
+        this->typeCheck_Logical(left->type, op, right->type);
         break;
       case Operator::PLUS:
       case Operator::MINUS:
       case Operator::DIVIDES:
       case Operator::TIMES:
       case Operator::POW:
-        this->typeCheck_Arithmetic(left, op, right);
+        this->typeCheck_Arithmetic(left->type, op, right->type);
         break;
       case Operator::LT:
       case Operator::GT:
       case Operator::LEQ:
       case Operator::GEQ:
-        this->typeCheck_Relational(left, op, right);
+        this->typeCheck_Relational(left->type, op, right->type);
         break;
       case Operator::EQ:
       case Operator::NEQ:
-        this->typeCheck_Equality(left, op, right);
+        this->typeCheck_Equality(left->type, op, right->type);
         break;
       default:
         break;
     }
+    this->emit(left->gen + op_toString_exp(op) + right->gen);
   }
 
 private:
@@ -452,6 +461,27 @@ private:
         case Operator::DIVIDES: return "(/)";
         case Operator::TIMES:   return "(*)";
         case Operator::POW:     return "(^)";
+        default:                return "(unknown_operator)";
+    }
+  }
+
+  std::string op_toString_exp(Operator op) {
+    switch (op) {
+        case Operator::AND:     return "&&";
+        case Operator::OR:      return "||";
+        case Operator::NOT:     return "not";
+        case Operator::LT:      return "<";
+        case Operator::GT:      return ">";
+        case Operator::LEQ:     return "<=";
+        case Operator::GEQ:     return ">=";
+        case Operator::EQ:      return "=";
+        case Operator::NEQ:     return "<>";
+        case Operator::NEGATE:  return "-";
+        case Operator::PLUS:    return "+";
+        case Operator::MINUS:   return "-";
+        case Operator::DIVIDES: return "/";
+        case Operator::TIMES:   return "*";
+        case Operator::POW:     return "^";
         default:                return "(unknown_operator)";
     }
   }

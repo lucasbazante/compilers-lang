@@ -41,6 +41,7 @@ State St;
     Statement* stmt;
     StatementList* stmt_list;
 
+
     // Less complicated types: no action besides the basic
     std::string* name;
     TypeInfo* type;
@@ -129,11 +130,11 @@ var_decl:
     Var Identifier Colon type { $$ = new VarDecl(&St, *$2, *$4); }
     | Var Identifier Colon type Assign exp {
         auto actual_type = *$6->type;
-        $$ = new VarDecl(&St, *$2, *$4, actual_type);
+        $$ = new VarDecl(&St, *$2, *$4, actual_type); //St.add_declaration(*$2, *$4, *$6)
       }
     | Var Identifier Assign exp {
         auto exp_type = *$4->type;
-        $$ = new VarDecl(&St, *$2, exp_type);
+        $$ = new VarDecl(&St, *$2, exp_type); //St.add_declaration(*$2, exp_type, *$6)
       }
     ;
 
@@ -297,75 +298,75 @@ exp:
     exp And exp {
           auto lhs = $1;
           auto rhs = $3;
-          $$ = new Expression(lhs->type, Expression::Operator::AND, rhs->type);
+          $$ = new Expression(lhs, Expression::Operator::AND, rhs);
       }
     | exp Or exp {
           auto lhs = $1;
           auto rhs = $3;
-          $$ = new Expression(lhs->type, Expression::Operator::OR, rhs->type);
+          $$ = new Expression(lhs, Expression::Operator::OR, rhs);
       }
     | Not exp {
           auto expr = $2;
-          $$ = new Expression(Expression::Operator::NOT, expr->type);
+          $$ = new Expression(Expression::Operator::NOT, expr);
       }
     | exp Lt exp {
           auto lhs = $1;
           auto rhs = $3;
-          $$ = new Expression(lhs->type, Expression::Operator::LT, rhs->type);
+          $$ = new Expression(lhs, Expression::Operator::LT, rhs);
       }
     | exp Gt exp {
           auto lhs = $1;
           auto rhs = $3;
-          $$ = new Expression(lhs->type, Expression::Operator::GT, rhs->type);
+          $$ = new Expression(lhs, Expression::Operator::GT, rhs);
       }
     | exp Leq exp {
           auto lhs = $1;
           auto rhs = $3;
-          $$ = new Expression(lhs->type, Expression::Operator::LEQ, rhs->type);
+          $$ = new Expression(lhs, Expression::Operator::LEQ, rhs);
       }
     | exp Geq exp {
           auto lhs = $1;
           auto rhs = $3;
-          $$ = new Expression(lhs->type, Expression::Operator::GEQ, rhs->type);
+          $$ = new Expression(lhs, Expression::Operator::GEQ, rhs);
       }
     | exp Eq exp {
           auto lhs = $1;
           auto rhs = $3;
-          $$ = new Expression(lhs->type, Expression::Operator::EQ, rhs->type);
+          $$ = new Expression(lhs, Expression::Operator::EQ, rhs);
       }
     | exp Neq exp {
           auto lhs = $1;
           auto rhs = $3;
-          $$ = new Expression(lhs->type, Expression::Operator::NEQ, rhs->type);
+          $$ = new Expression(lhs, Expression::Operator::NEQ, rhs);
       }
     | Minus exp %prec UMINUS {
         auto expr = $2;
-        $$ = new Expression(Expression::Operator::NEGATE, expr->type);
+        $$ = new Expression(Expression::Operator::NEGATE, expr);
       }
     | exp Plus exp {
           auto lhs = $1;
           auto rhs = $3;
-          $$ = new Expression(lhs->type, Expression::Operator::PLUS, rhs->type);
+          $$ = new Expression(lhs, Expression::Operator::PLUS, rhs);
       }
     | exp Minus exp {
           auto lhs = $1;
           auto rhs = $3;
-          $$ = new Expression(lhs->type, Expression::Operator::MINUS, rhs->type);
+          $$ = new Expression(lhs, Expression::Operator::MINUS, rhs);
       }
     | exp Divides exp {
           auto lhs = $1;
           auto rhs = $3;
-          $$ = new Expression(lhs->type, Expression::Operator::DIVIDES, rhs->type);
+          $$ = new Expression(lhs, Expression::Operator::DIVIDES, rhs);
       }
     | exp Times exp {
           auto lhs = $1;
           auto rhs = $3;
-          $$ = new Expression(lhs->type, Expression::Operator::TIMES, rhs->type);
+          $$ = new Expression(lhs, Expression::Operator::TIMES, rhs);
       }
     | exp Pow exp {
           auto lhs = $1;
           auto rhs = $3;
-          $$ = new Expression(lhs->type, Expression::Operator::POW, rhs->type);
+          $$ = new Expression(lhs, Expression::Operator::POW, rhs);
       }
     | literal             { $$ = new Expression($1, true); }
     | call_stmt           { auto call = $1; $$ = new Expression(call->type, call->type_ok); }
@@ -373,7 +374,7 @@ exp:
     | var                 { auto v = $1; $$ = new Expression(v->type, v->type_ok); }
     | ref_var             { auto ref = $1; $$ = new Expression(ref->type, ref->type_ok); }
     | deref_var           { auto deref = $1; $$ = new Expression(deref->type, deref->type_ok); }
-    | L_Paren exp R_Paren { $$ = $2; }
+    | L_Paren exp R_Paren { $$ = $2; $$->emit("(" + $2->gen + ")"); }
     ;
 
 var:
