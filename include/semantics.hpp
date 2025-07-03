@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -16,7 +17,7 @@
  * That way we can propagate type errors up the parse tree.
  */
 class SemanticAction {
-public:
+protected:
   bool type_ok;
 
   /*
@@ -26,6 +27,22 @@ public:
    */
   bool is_ValidCoercion(TypeInfo l, TypeInfo r) {
     return (l.b_type == BaseType::FLOAT and r.b_type == BaseType::INT);
+  }
+
+private:
+  std::string gen;
+
+public:
+  void Generate(const std::string& gen) {
+    this->gen = gen;
+  }
+
+  const std::string& Gen() {
+    return gen;
+  }
+
+  const bool Ok() {
+    return type_ok;
   }
 };
 
@@ -71,6 +88,8 @@ public:
                 << name << "` is already declared in the current scope.\n";
       this->type_ok = false;
     }
+
+    this->Generate(name);
   }
 
   /*
@@ -115,6 +134,8 @@ public:
                 << name << "` is already declared in the current scope.\n";
       this->type_ok = false;
     }
+
+    this->Generate(name);
   }
 };
 
@@ -153,6 +174,16 @@ public:
 
   ~ParameterField() {
     for (auto f : fields) delete f;
+  }
+
+  std::string Gen() {
+    std::ostringstream gen;
+
+    for (auto f : fields) {
+      gen << "\t" << f->type->Gen() << " " << f->name << ";\n";
+    }
+
+    return gen.str();
   }
 };
 
@@ -295,6 +326,7 @@ public:
 class Expression : public SemanticAction {
 public:
   TypeInfo* type; // The type of the expression
+  std::string t_var; // For the 3AC pattern: the temporary variable in which the expression is stored.
 
   /*
    * A simple enum to indicate which operator is being used
@@ -320,9 +352,12 @@ public:
    * in which the type information (and checking) comes from other rules, so we dont't have
    * to do anything else here.
    */
-  Expression(TypeInfo* type, bool ok)
+  Expression(TypeInfo* type, bool ok, const std::string& gen)
     : type(type)
-  { this->type_ok = ok; }
+  {
+    this->type_ok = ok;
+    this->Generate(gen);
+  }
 
   /*
    * This constructor handles the case of instantiating a struct with the `new name` pattern.
@@ -346,6 +381,7 @@ public:
     
     this->type_ok = true;
     this->type = new TypeInfo(sym->type);
+    this->Generate(name + "{}");
   }
 
   /*
@@ -356,12 +392,12 @@ public:
    *
    * It then type checks the expression according to the rules below.
    */
-  Expression(Operator op, TypeInfo* operand) {
+  Expression(Operator op, Expression* operand) {
     switch (op) {
         // If its a `not`, the operand must be of type `bool`,
         // else we got ourselves a type error.
         case Operator::NOT:
-          this->type_ok = operand->b_type == BaseType::BOOL;
+          this->type_ok = operand->type->b_type == BaseType::BOOL;
 
           if (this->type_ok)
             this->type = new TypeInfo(BaseType::BOOL);
@@ -373,11 +409,11 @@ public:
         // In case of an unary minus, the operand must be
         // either one of the numeric types.
         case Operator::NEGATE:
-          this->type_ok = operand->b_type == BaseType::INT
-                  or operand->b_type == BaseType::FLOAT;
+          this->type_ok = operand->type->b_type == BaseType::INT
+                  or operand->type->b_type == BaseType::FLOAT;
 
           if (this->type_ok)
-            this->type = new TypeInfo(operand->b_type);
+            this->type = new TypeInfo(operand->type->b_type);
           else
             this->type = new TypeInfo(BaseType::NONE);
 
@@ -389,6 +425,8 @@ public:
             this->type_ok = false;
             this->type = new TypeInfo(BaseType::NONE);
     }
+
+    this->Generate(this->op_toString_Gen(op) + operand->Gen());
   }
 
   /*
@@ -402,30 +440,39 @@ public:
    * Since each of these cases of expressions involves different type checking mechanisms,
    * it's good to handle them separately, keeping the code organized and decoupled.
    */
-  Expression(TypeInfo* left, Operator op, TypeInfo* right) {
+  Expression(Expression* left, Operator op, Expression* right) {
     switch (op) {
       case Operator::AND:
       case Operator::OR:
-        this->typeCheck_Logical(left, op, right);
+        this->typeCheck_Logical(left->type, op, right->type);
         break;
       case Operator::PLUS:
       case Operator::MINUS:
       case Operator::DIVIDES:
       case Operator::TIMES:
       case Operator::POW:
-        this->typeCheck_Arithmetic(left, op, right);
+        this->typeCheck_Arithmetic(left->type, op, right->type);
         break;
       case Operator::LT:
       case Operator::GT:
       case Operator::LEQ:
       case Operator::GEQ:
-        this->typeCheck_Relational(left, op, right);
+        this->typeCheck_Relational(left->type, op, right->type);
         break;
       case Operator::EQ:
       case Operator::NEQ:
-        this->typeCheck_Equality(left, op, right);
+        this->typeCheck_Equality(left->type, op, right->type);
         break;
       default:
+        break;
+    }
+
+    switch (op) {
+      case Operator::POW:
+        this->Generate("pow(" + left->Gen() + ", " + right->Gen() + ")");
+        break;
+      default:
+        this->Generate(left->Gen() + op_toString_Gen(op) + right->Gen());
         break;
     }
   }
@@ -453,6 +500,31 @@ private:
         case Operator::TIMES:   return "(*)";
         case Operator::POW:     return "(^)";
         default:                return "(unknown_operator)";
+    }
+  }
+  
+  /*
+   * Simple method to convert the operator to string so we can
+   * add it to the code generation.
+   * Differs from the above on the absence of parenthesis.
+   */
+  std::string op_toString_Gen(Operator op) {
+    switch (op) {
+        case Operator::AND:     return " && ";
+        case Operator::OR:      return " || ";
+        case Operator::NOT:     return "!";
+        case Operator::LT:      return " < ";
+        case Operator::GT:      return " > ";
+        case Operator::LEQ:     return " <= ";
+        case Operator::GEQ:     return " >= ";
+        case Operator::EQ:      return " == ";
+        case Operator::NEQ:     return " != ";
+        case Operator::NEGATE:  return "-";
+        case Operator::PLUS:    return " + ";
+        case Operator::MINUS:   return " - ";
+        case Operator::DIVIDES: return " / ";
+        case Operator::TIMES:   return " * ";
+        default:                return "";
     }
   }
 
@@ -695,6 +767,7 @@ public:
 
     this->type_ok = true;
     this->type = &sym->type;
+    this->Generate(name);
   }
 
   /*
@@ -734,6 +807,7 @@ public:
       if (name == field.first) {
         this->type_ok = true;
         this->type = new TypeInfo(field.second);
+        this->Generate(exp->Gen() + "." + name);
 
         return;
       }
@@ -768,9 +842,9 @@ class Reference : public SemanticAction {
 public:
   TypeInfo* type;
 
-  Reference(TypeInfo* base_type) {
+  Reference(Variable* var) {
     // If anything went wrong already with the argument.
-    if (base_type->b_type == BaseType::NONE) {
+    if (var->type->b_type == BaseType::NONE) {
       std::cerr << "[ERROR] Cannot create reference to an invalid type.\n";
       this->type_ok = false;
       this->type = new TypeInfo(BaseType::NONE);
@@ -778,7 +852,8 @@ public:
     }
 
     this->type_ok = true;
-    this->type = new TypeInfo(BaseType::REFERENCE, *base_type);
+    this->type = new TypeInfo(BaseType::REFERENCE, *var->type);
+    this->Generate("&" + var->Gen());
   }
 };
 
@@ -789,8 +864,9 @@ public:
  * It is invoked whenever `deref(...) := exp` happens, or as a regular expression.
  * Note that `deref(deref(...))` is valid, as long as the type of the argument is appropriate.
  *
- * For the semantic actions, we simply receive the type of the argument and check if
- * it is a reference, since that's the only valid case for a dereferencing.
+ * For the semantic actions, we simply receive the argument and check if
+ * its type is a reference, since that's the only valid case for a dereferencing.
+ * The argument can be either a variable or another dereference.
  * 
  * We then set the type of this action to be the type that the reference was pointing to.
  */
@@ -798,8 +874,8 @@ class Dereference : public SemanticAction {
 public:
   TypeInfo* type;
 
-  Dereference(TypeInfo* type) {
-    if (type->b_type != BaseType::REFERENCE) {
+  Dereference(Variable* var) {
+    if (var->type->b_type != BaseType::REFERENCE) {
       std::cerr << "[ERROR] Cannot dereference a type that isn't a reference.\n";
       this->type_ok = false;
       this->type = new TypeInfo(BaseType::NONE);
@@ -808,6 +884,20 @@ public:
 
     this->type_ok = true;
     this->type = type->ref_base.get();
+    this->Generate("*" + var->Gen());
+  }
+
+  Dereference(Dereference* deref) {
+    if (deref->type->b_type != BaseType::REFERENCE) {
+      std::cerr << "[ERROR] Cannot dereference a type that isn't a reference.\n";
+      this->type_ok = false;
+      this->type = new TypeInfo(BaseType::NONE);
+      return;
+    }
+
+    this->type_ok = true;
+    this->type = type->ref_base.get();
+    this->Generate("*" + deref->Gen());
   }
 };
 
@@ -1070,7 +1160,8 @@ public:
       }
     }
 
-    this->type_ok = var->type_ok and exp->type_ok;
+    this->type_ok = var->Ok() and exp->Ok();
+    this->Generate(var->Gen());
   }
 
   /*
@@ -1090,7 +1181,8 @@ public:
       }
     }
 
-    this->type_ok = deref->type_ok and exp->type_ok;
+    this->type_ok = deref->Ok() and exp->Ok();
+    this->Generate(deref->Gen());
   }
 };
 
@@ -1146,7 +1238,7 @@ public:
 class WhileStatement : public Statement {
 public:
   WhileStatement(Expression* condition, StatementList* body) {
-    this->type_ok = condition->type_ok;
+    this->type_ok = condition->Ok();
     this->has_return = body->has_return;
     this->return_type = body->return_type;
 
@@ -1173,7 +1265,7 @@ public:
 class DoUntilStatement : public Statement {
 public:
   DoUntilStatement(Expression* condition, StatementList* body) {
-    this->type_ok = condition->type_ok;
+    this->type_ok = condition->Ok();
     this->has_return = body->has_return;
     this->return_type = body->return_type;
 
@@ -1204,7 +1296,7 @@ public:
 class IfStatement : public Statement {
 public:
   IfStatement(State* St, Expression* condition, StatementList* body, StatementList* else_body) {
-    this->type_ok = condition->type_ok;
+    this->type_ok = condition->Ok();
     this->has_return = body->has_return;
     this->return_type = body->return_type;
 
@@ -1253,7 +1345,7 @@ public:
    * In this case we check if the expression is well-typed.
    */
   ReturnStatement(Expression* exp) {
-    this->type_ok = exp->type_ok;
+    this->type_ok = exp->Ok();
     this->has_return = true;
     this->return_type = new TypeInfo(*exp->type);
   }

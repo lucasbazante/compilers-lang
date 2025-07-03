@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <memory>
+#include <ostream>
+#include <sstream>
 #include <unordered_map>
 #include <string>
 
@@ -27,6 +29,16 @@ inline std::ostream& operator<<(std::ostream& os, BaseType type) {
 	case BaseType::NONE: return os << "none";
         default: return os << "error";
     }
+}
+
+inline std::string BaseType_toString(BaseType b_type) {
+	switch (b_type) {
+		case BaseType::FLOAT: return "float";
+		case BaseType::INT: return "int";
+		case BaseType::STRING: return "std::string";
+		case BaseType::BOOL: return "bool";
+		default: return "";
+	}
 }
 
 /*
@@ -98,6 +110,18 @@ struct TypeInfo {
 		  struct_name(other.struct_name),
 		  ref_base(other.ref_base ? std::make_shared<TypeInfo>(*other.ref_base) : nullptr)
 	{}
+
+	std::string Gen() {
+		std::ostringstream gen;
+		if (this->b_type == BaseType::REFERENCE)
+			gen << this->ref_base->Gen() << "*";
+		else if (this->b_type == BaseType::STRUCT)
+			gen << this->struct_name;
+		else
+			gen << BaseType_toString(this->b_type);
+
+		return gen.str();
+	}
 };
 
 inline std::ostream& operator<<(std::ostream& os, const TypeInfo& type) {
