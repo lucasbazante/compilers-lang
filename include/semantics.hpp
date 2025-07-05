@@ -997,6 +997,17 @@ public:
     statements.push_back(statement);
   }
 
+  std::string Gen() {
+    std::ostringstream gen;
+
+    for (auto s : statements)
+      gen << "\t"
+          << s->Gen()
+          << ";\n";
+
+    return gen.str();
+  }
+
   /*
    * This method performs the verification of the return type of functions.
    *
@@ -1142,7 +1153,6 @@ public:
  */
 class AssignStatement : public Statement {
 public:
-
   /*
    * This constructor handle the cases where the left-hand side corresponds
    * to an instance of the `var` rule.
@@ -1161,7 +1171,7 @@ public:
     }
 
     this->type_ok = var->Ok() and exp->Ok();
-    this->Generate(var->Gen());
+    this->Generate(var->Gen() + " = " + exp->Gen());
   }
 
   /*
@@ -1182,7 +1192,7 @@ public:
     }
 
     this->type_ok = deref->Ok() and exp->Ok();
-    this->Generate(deref->Gen());
+    this->Generate(deref->Gen() + " = " + exp->Gen());
   }
 };
 
@@ -1295,10 +1305,16 @@ public:
  */
 class IfStatement : public Statement {
 public:
+  std::string then_label;
+  std::string else_label;
+  std::string end_label;
+
   IfStatement(State* St, Expression* condition, StatementList* body, StatementList* else_body) {
     this->type_ok = condition->Ok();
     this->has_return = body->has_return;
     this->return_type = body->return_type;
+
+    auto if_body = *body;
 
     if (not else_body->statements.empty()) {
       for (auto statement : else_body->statements)
@@ -1311,6 +1327,44 @@ public:
 
       this->type_ok = false;
     }
+
+    // Code generation
+    this->then_label = St->Next_Label();
+    this->else_label = not else_body->statements.empty() ? St->Next_Label() : "";
+    this->end_label  = St->Next_Label();
+
+    std::ostringstream gen;
+    gen << "if ("
+        << condition->Gen()
+        << ") goto "
+        << this->then_label
+        << ";\n";
+    
+    if (not else_label.empty())
+      gen << "goto "
+          << this->else_label
+          << ";\n";
+    else
+      gen << "\tgoto "
+          << this->end_label
+          << ";\n";
+
+    gen << this->then_label
+        << ":\n"
+        << if_body.Gen();
+
+    if (not else_label.empty())
+      gen << "\tgoto "
+          << this->end_label
+          << ";\n"
+          << this->else_label
+          << ":\n"
+          << else_body->Gen();
+
+    gen << this->end_label
+        << ":\n";
+
+    this->Generate(gen.str());
   }
 };
 

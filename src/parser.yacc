@@ -104,7 +104,7 @@ State St;
 program:
     Program Identifier Begin {
     } decl_list_opt End {
-        std::cout << St.Output() << std::endl;
+        std::cout << St.Output();
     }
     ;
 
@@ -252,18 +252,17 @@ stmt:
 assign_stmt:
     var Assign exp {
         $$ = new AssignStatement($1, $3);
-
-        St.Emit_Assign($$->Gen(), $3->Gen(), $3->type);
       }
     | deref_var Assign exp {
         $$ = new AssignStatement($1, $3);
-
-        St.Emit_Assign($$->Gen(), $3->Gen(), $3->type);
       }
     ;
 
 if_stmt:
-    If exp Then stmt_list else_opt Fi { $$ = new IfStatement(&St, $2, $4, $5); }
+    If exp Then stmt_list else_opt Fi {
+        $$ = new IfStatement(&St, $2, $4, $5);
+        St.Emit($$->Gen());
+      }
     ;
 
 else_opt:
