@@ -146,7 +146,7 @@ var_decl:
 
 proc_decl:
     proc_decl_signature Begin proc_body End {
-        $3->verify_return($1);
+        $3->verify_return(&St, $1);
         St.Table()->pop();
       }
     ;
@@ -251,10 +251,10 @@ stmt:
 
 assign_stmt:
     var Assign exp {
-        $$ = new AssignStatement($1, $3);
+        $$ = new AssignStatement(&St, $1, $3);
       }
     | deref_var Assign exp {
-        $$ = new AssignStatement($1, $3);
+        $$ = new AssignStatement(&St, $1, $3);
       }
     ;
 
@@ -271,7 +271,7 @@ else_opt:
     ;
 
 while_stmt:
-    While exp Do stmt_list Od { $$ = new WhileStatement($2, $4); }
+    While exp Do stmt_list Od { $$ = new WhileStatement(&St, $2, $4); }
     ;
 
 for_stmt:
@@ -279,12 +279,12 @@ for_stmt:
     ;
 
 do_until_stmt:
-    Do stmt_list Until exp Od { $$ = new DoUntilStatement($4, $2); }
+    Do stmt_list Until exp Od { $$ = new DoUntilStatement(&St, $4, $2); }
     ;
 
 return_stmt:
     Return       { $$ = new ReturnStatement(); }
-    | Return exp { $$ = new ReturnStatement($2); }
+    | Return exp { $$ = new ReturnStatement(&St, $2); }
     ;
 
 call_stmt:
@@ -455,17 +455,17 @@ var:
     ;
 
 ref_var:
-    Ref L_Paren var R_Paren { $$ = new Reference($3); }
+    Ref L_Paren var R_Paren { $$ = new Reference(&St, $3); }
     ;
 
 deref_var:
     Deref L_Paren var R_Paren {
         auto var = $3;
-        $$ = new Dereference(var);
+        $$ = new Dereference(&St, var);
       }
     | Deref L_Paren deref_var R_Paren {
         auto deref = $3;
-        $$ = new Dereference(deref);
+        $$ = new Dereference(&St, deref);
     }
     ;
 

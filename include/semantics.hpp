@@ -75,6 +75,7 @@ public:
                   << name << "` declaration: `"
                   << decl_type.struct_name << "´ is not a declared type in the current scope.\n";
         this->type_ok = false;
+        St->FlagError();
         decl_type.b_type = BaseType::NONE;
     }
 
@@ -87,6 +88,7 @@ public:
                 << name << "´ declaration: symbol `"
                 << name << "` is already declared in the current scope.\n";
       this->type_ok = false;
+      St->FlagError();
     }
 
     this->Generate(name);
@@ -108,6 +110,7 @@ public:
                   << name << "` declaration: `"
                   << decl_type.struct_name << "´ is not a declared type in the current scope.\n";
         this->type_ok = false;
+        St->FlagError();
         decl_type.b_type = BaseType::NONE;
     }
 
@@ -122,6 +125,7 @@ public:
                   << "´.\n";
 
         this->type_ok = false;
+        St->FlagError();
       }
     }
 
@@ -133,6 +137,7 @@ public:
                 << name << "´ declaration: symbol `"
                 << name << "` is already declared in the current scope.\n";
       this->type_ok = false;
+      St->FlagError();
     }
 
     this->Generate(name);
@@ -226,6 +231,7 @@ public:
                 << name
                 << "` declaration: the symbol `" << name << "` is already declared in the current scope.\n";
       this->type_ok = false;
+      St->FlagError();
     }
   }
 };
@@ -269,6 +275,7 @@ public:
                 << "`: symbol `"
                 << name << "` is already declared in this scope.\n";
       this->type_ok = false;
+      St->FlagError();
     }
 
     this->name = name;
@@ -299,6 +306,7 @@ public:
                   << this->name
                   << "` declaration.\n";
         this->type_ok = false;
+        St->FlagError();
       }
     }
   }
@@ -375,6 +383,7 @@ public:
                 << name
                 << "` is not a declared struct in this scope.\n";
       this->type_ok = false;
+      St->FlagError();
       this->type = new TypeInfo(BaseType::NONE);
       return;
     }
@@ -751,6 +760,7 @@ public:
                 << "´ isn't declared anywhere in this scope.\n";
       this->type = new TypeInfo(BaseType::NONE);
       this->type_ok = false;
+      St->FlagError();
       return;
     }
 
@@ -761,6 +771,7 @@ public:
                 << name
                 << "` doesn't refer to a variable or a parameter.\n";
       this->type_ok = false;
+      St->FlagError();
       this->type = new TypeInfo(BaseType::NONE);
       return;
     }
@@ -785,6 +796,7 @@ public:
       std::cerr << "[ERROR] Trying to use dot notation on a non-struct object.\n";
 
       this->type_ok = false;
+      St->FlagError();
       this->type = new TypeInfo(BaseType::NONE);
 
       return;
@@ -798,6 +810,7 @@ public:
                 << "´ isn't declared as a struct anywhere in this scope.\n";
 
       this->type_ok = false;
+      St->FlagError();
       this->type = new TypeInfo(BaseType::NONE);
 
       return;
@@ -819,6 +832,7 @@ public:
               << exp->type->struct_name << "`.\n";
 
     this->type_ok = false;
+    St->FlagError();
     this->type = new TypeInfo(BaseType::NONE);
   }
 };
@@ -842,11 +856,12 @@ class Reference : public SemanticAction {
 public:
   TypeInfo* type;
 
-  Reference(Variable* var) {
+  Reference(State* St, Variable* var) {
     // If anything went wrong already with the argument.
     if (var->type->b_type == BaseType::NONE) {
       std::cerr << "[ERROR] Cannot create reference to an invalid type.\n";
       this->type_ok = false;
+      St->FlagError();
       this->type = new TypeInfo(BaseType::NONE);
       return;
     }
@@ -874,10 +889,11 @@ class Dereference : public SemanticAction {
 public:
   TypeInfo* type;
 
-  Dereference(Variable* var) {
+  Dereference(State* St, Variable* var) {
     if (var->type->b_type != BaseType::REFERENCE) {
       std::cerr << "[ERROR] Cannot dereference a type that isn't a reference.\n";
       this->type_ok = false;
+      St->FlagError();
       this->type = new TypeInfo(BaseType::NONE);
       return;
     }
@@ -887,10 +903,11 @@ public:
     this->Generate("*" + var->Gen());
   }
 
-  Dereference(Dereference* deref) {
+  Dereference(State* St, Dereference* deref) {
     if (deref->type->b_type != BaseType::REFERENCE) {
       std::cerr << "[ERROR] Cannot dereference a type that isn't a reference.\n";
       this->type_ok = false;
+      St->FlagError();
       this->type = new TypeInfo(BaseType::NONE);
       return;
     }
@@ -990,6 +1007,7 @@ public:
 
           // Keep the return type as it was.
           this->type_ok = false;
+          St->FlagError();
         }
       }
     }
@@ -1022,7 +1040,7 @@ public:
    * Then, if the body has a return, we check every return type of every statement, and type checks
    * against the return type of the signature, flagging errors if the types are incompatible.
    */
-  void verify_return(ProcedureDecl* declaration) {
+  void verify_return(State* St, ProcedureDecl* declaration) {
     this->type_ok = true;
 
     // If the function is non-void and the body has no returns.
@@ -1034,6 +1052,7 @@ public:
                 << "` but no return statement was found.\n";
 
       this->type_ok = false;
+      St->FlagError();
       return;
     }
 
@@ -1051,6 +1070,7 @@ public:
                       << "`.\n";
 
             this->type_ok = false;
+            St->FlagError();
             continue;
           }
         }
@@ -1087,6 +1107,7 @@ public:
                 << "`.\n";
       
       this->type_ok = false;
+      St->FlagError();
       this->type = new TypeInfo(BaseType::NONE);
       return;
     }
@@ -1098,6 +1119,7 @@ public:
                 << "` is not a function.\n";
 
       this->type_ok = false;
+      St->FlagError();
       this->type = new TypeInfo(BaseType::NONE);
     }
 
@@ -1109,6 +1131,7 @@ public:
       std::cerr << "[ERROR] Function `" << f_name << "` expects " << param_types.size()
                 << " arguments, but got " << arg_exprs.size() << ".\n";
       this->type_ok = false;
+      St->FlagError();
       this->type = new TypeInfo(BaseType::NONE);
       return;
     }
@@ -1121,6 +1144,7 @@ public:
                     << "` has type `" << *arg_exprs[i]->type << "`, expected `"
                     << param_types[i].second << "`.\n";
           this->type_ok = false;
+          St->FlagError();
           this->type = new TypeInfo(BaseType::NONE);
           return;
         }
@@ -1157,7 +1181,7 @@ public:
    * This constructor handle the cases where the left-hand side corresponds
    * to an instance of the `var` rule.
    */
-  AssignStatement(Variable* var, Expression* exp) {
+  AssignStatement(State* St, Variable* var, Expression* exp) {
     if (*var->type != *exp->type) {
       if (not is_ValidCoercion(*var->type, *exp->type)) {
         std::cerr << "[ERROR] Type error on assignment: expected `"
@@ -1166,11 +1190,16 @@ public:
                   << *exp->type
                   << "`.\n";
         this->type_ok = false;
+        St->FlagError();
         return;
       }
     }
 
     this->type_ok = var->Ok() and exp->Ok();
+
+    if (not this->type_ok)
+      St->FlagError();
+
     this->Generate(var->Gen() + " = " + exp->Gen());
   }
 
@@ -1178,7 +1207,7 @@ public:
    * This constructor handle the cases where the left-hand side corresponds
    * to an instance of the `deref` rule.
    */
-  AssignStatement(Dereference* deref, Expression* exp) {
+  AssignStatement(State* St, Dereference* deref, Expression* exp) {
     if (*deref->type != *exp->type) {
       if (not is_ValidCoercion(*deref->type, *exp->type)) {
         std::cerr << "[ERROR] Type error on assignment: expected `"
@@ -1187,11 +1216,16 @@ public:
                   << *exp->type
                   << "`.\n";
         this->type_ok = false;
+        St->FlagError();
         return;
       }
     }
 
     this->type_ok = deref->Ok() and exp->Ok();
+
+    if (not this->type_ok)
+      St->FlagError();
+
     this->Generate(deref->Gen() + " = " + exp->Gen());
   }
 };
@@ -1231,6 +1265,7 @@ public:
         or step->type->b_type != BaseType::INT) {
       std::cerr << "[ERROR] Expressions that define the loop stepping logic for must be of type `int`.\n";
       this->type_ok = false;
+      St->FlagError();
     }
   }
 };
@@ -1247,7 +1282,7 @@ public:
  */
 class WhileStatement : public Statement {
 public:
-  WhileStatement(Expression* condition, StatementList* body) {
+  WhileStatement(State* St, Expression* condition, StatementList* body) {
     this->type_ok = condition->Ok();
     this->has_return = body->has_return;
     this->return_type = body->return_type;
@@ -1258,6 +1293,7 @@ public:
                 << " Received `" << *condition->type << "`.\n";
 
       this->type_ok = false;
+      St->FlagError();
     }
   }
 };
@@ -1274,7 +1310,7 @@ public:
  */
 class DoUntilStatement : public Statement {
 public:
-  DoUntilStatement(Expression* condition, StatementList* body) {
+  DoUntilStatement(State* St, Expression* condition, StatementList* body) {
     this->type_ok = condition->Ok();
     this->has_return = body->has_return;
     this->return_type = body->return_type;
@@ -1285,6 +1321,7 @@ public:
                 << " Received `" << *condition->type << "`.\n";
 
       this->type_ok = false;
+      St->FlagError();
     }
   }
 };
@@ -1314,6 +1351,9 @@ public:
     this->has_return = body->has_return;
     this->return_type = body->return_type;
 
+    if (not this->type_ok)
+      St->FlagError();
+
     auto if_body = *body;
 
     if (not else_body->statements.empty()) {
@@ -1326,6 +1366,7 @@ public:
                 << " Received `" << *condition->type << "`.\n";
 
       this->type_ok = false;
+      St->FlagError();
     }
 
     // Code generation
@@ -1398,8 +1439,12 @@ public:
    *
    * In this case we check if the expression is well-typed.
    */
-  ReturnStatement(Expression* exp) {
+  ReturnStatement(State* St, Expression* exp) {
     this->type_ok = exp->Ok();
+
+    if (not this->type_ok)
+      St->FlagError();
+
     this->has_return = true;
     this->return_type = new TypeInfo(*exp->type);
   }
