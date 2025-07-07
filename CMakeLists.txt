@@ -14,9 +14,13 @@ FLEX_TARGET(Lexer src/lexer.l ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
 BISON_TARGET(Parser src/parser.yacc ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
     DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/parser.hpp)
 
+file(GLOB_RECURSE CPP_SOURCES "src/*.cpp")
+
 add_executable(parser
     ${FLEX_Lexer_OUTPUTS}
     ${BISON_Parser_OUTPUTS}
+    ${CPP_SOURCES}
 )
+
 
 target_include_directories(parser PRIVATE ${CMAKE_CURRENT_BINARY_DIR} include)

@@ -66,33 +66,7 @@ public:
    * exists (it can be non-existent in cases of structs!), checking if the symbol is already declared,
    * inserting it if correctly defined, and so on.
   */
-  VarDecl(State* St, std::string name, TypeInfo decl_type) {
-    this->type_ok = true;
-
-    // Checking if type exists, in case of an invalid struct.
-    if (not decl_type.struct_name.empty() and not St->Table()->lookup(decl_type.struct_name)) {
-        std::cout << "[ERROR] In variable ´"
-                  << name << "` declaration: `"
-                  << decl_type.struct_name << "´ is not a declared type in the current scope.\n";
-        this->type_ok = false;
-        St->FlagError();
-        decl_type.b_type = BaseType::NONE;
-    }
-
-    Symbol sym(name, SymbolKind::VARIABLE, decl_type);
-
-    // If we could not insert, it means that there is already a symbol declared
-    // in the same scope.
-    if (not St->Table()->insert(sym)) {
-      std::cout << "[ERROR] In variable ´"
-                << name << "´ declaration: symbol `"
-                << name << "` is already declared in the current scope.\n";
-      this->type_ok = false;
-      St->FlagError();
-    }
-
-    this->Generate(name);
-  }
+  VarDecl(State* St, std::string name, TypeInfo decl_type);
 
   /*
    * This constructor handles the case of a declaration that contains both a written type declaration
@@ -101,47 +75,7 @@ public:
    * It checks if the expected type is the same as the actual type (the type of the expression), or if
    * it's a valid coercion, and inserts the symbol if it's not already defined.
    */
-  VarDecl(State* St, std::string name, TypeInfo decl_type, TypeInfo actual_type) {
-    this->type_ok = true;
-
-    // Checking if type is a valid type in case of it being a struct type.
-    if (not decl_type.struct_name.empty() and not St->Table()->lookup(decl_type.struct_name)) {
-        std::cout << "[ERROR] In variable ´"
-                  << name << "` declaration: `"
-                  << decl_type.struct_name << "´ is not a declared type in the current scope.\n";
-        this->type_ok = false;
-        St->FlagError();
-        decl_type.b_type = BaseType::NONE;
-    }
-
-    // Type checking the expected type agains the actual type, considering the possibilty
-    // of a valid coercion.
-    if (decl_type.b_type != BaseType::NONE and decl_type != actual_type) {
-      if (not is_ValidCoercion(decl_type, actual_type)) {
-        std::cout << "[ERROR] Expected ´"
-                  << decl_type
-                  << "´, received ´"
-                  << actual_type
-                  << "´.\n";
-
-        this->type_ok = false;
-        St->FlagError();
-      }
-    }
-
-    Symbol sym(name, SymbolKind::VARIABLE, decl_type);
-
-    // If we could not insert the symbol, it is already declared under the current scope.
-    if (not St->Table()->insert(sym)) {
-      std::cout << "[ERROR] In variable ´"
-                << name << "´ declaration: symbol `"
-                << name << "` is already declared in the current scope.\n";
-      this->type_ok = false;
-      St->FlagError();
-    }
-
-    this->Generate(name);
-  }
+  VarDecl(State* St, std::string name, TypeInfo decl_type, TypeInfo actual_type);
 };
 
 /*
@@ -213,27 +147,7 @@ public:
    * Then it tries to add the type to the symbol table, registering an error
    * in case we already have a symbol with the same name declared.
    */
-  StructDecl(State* St, std::string name, ParameterField* fields) {
-    this->type_ok = true;
-
-    TypeInfo struct_type(BaseType::STRUCT, name);
-
-    Symbol symbol(name, SymbolKind::STRUCT, struct_type);
-
-    // Adding the parameters to the type information.
-    for (const auto& field : fields->fields) {
-      symbol.parameters.push_back({field->name, *field->type});
-    }
-
-    // Try to add, flag error if it already exists.
-    if (not St->Table()->insert(symbol)) {
-      std::cerr << "[ERROR] In struct `"
-                << name
-                << "` declaration: the symbol `" << name << "` is already declared in the current scope.\n";
-      this->type_ok = false;
-      St->FlagError();
-    }
-  }
+  StructDecl(State* St, std::string name, ParameterField* fields);
 };
 
 /*
@@ -260,27 +174,7 @@ public:
    *
    * It builds the symbol for the function, register all of it's parameters and tries to push it into the symbol table.
    */
-  ProcedureDecl(State* St, std::string name, ParameterField* params, TypeInfo* return_type) {
-    this->type_ok = true;
-
-    Symbol sym(name, SymbolKind::FUNCTION, *return_type);
-
-    // Saving its parameters.
-    for (auto param : params->fields)
-      sym.parameters.push_back({param->name, *param->type});
-
-    if (not St->Table()->insert(sym)) {
-      std::cerr << "[ERROR] In declaration of procedure `"
-                << name
-                << "`: symbol `"
-                << name << "` is already declared in this scope.\n";
-      this->type_ok = false;
-      St->FlagError();
-    }
-
-    this->name = name;
-    this->return_type = new TypeInfo(*return_type);
-  }
+  ProcedureDecl(State* St, std::string name, ParameterField* params, TypeInfo* return_type);
 
   /*
    * This method pushes all the parameters of the procedure being declared into the
@@ -292,24 +186,7 @@ public:
    * The action of pushing a new scope into the table is done in the yacc parser,
    * and this method is called in sequence.
    */
-  void declare_params_in_scope(State* St, ParameterField* params) {
-    for (auto param : params->fields) {
-      Symbol sym(param->name, SymbolKind::PARAMETER, *param->type);
-
-      // If we can't insert the symbol, it means there are two
-      // or more parameters with the same name, since its a fresh scope
-      // with no other symbols other than the parameters at this point.
-      if (not St->Table()->insert(sym)) {
-        std::cerr << "[ERROR] Redeclaration of parameter `"
-                  << sym.name
-                  << "` in procedure `"
-                  << this->name
-                  << "` declaration.\n";
-        this->type_ok = false;
-        St->FlagError();
-      }
-    }
-  }
+  void declare_params_in_scope(State* St, ParameterField* params);
 };
 
 // ---- Expressions ----
@@ -348,24 +225,15 @@ public:
     PLUS, MINUS, DIVIDES, TIMES, POW
   };
 
-  // Default constructor, testing purposes.
-  Expression() {}
-
   // Setting expression from base types, testing purposes.
-  Expression(BaseType t)
-  { this->type = new TypeInfo(t);}
+  Expression(BaseType t);
 
   /*
    * This constructor handles the case of literals, references, dereferences and variables,
    * in which the type information (and checking) comes from other rules, so we dont't have
    * to do anything else here.
    */
-  Expression(TypeInfo* type, bool ok, const std::string& gen)
-    : type(type)
-  {
-    this->type_ok = ok;
-    this->Generate(gen);
-  }
+  Expression(TypeInfo* type, bool ok, const std::string& gen);
 
   /*
    * This constructor handles the case of instantiating a struct with the `new name` pattern.
@@ -375,23 +243,7 @@ public:
    *
    * It receives the symbol table and the name to do so.
    */
-  Expression(State* St, std::string name) {
-    Symbol* sym = St->Table()->lookup(name);
-    
-    if (sym == nullptr) {
-      std::cerr << "[ERROR] Invalid struct instantiation: `"
-                << name
-                << "` is not a declared struct in this scope.\n";
-      this->type_ok = false;
-      St->FlagError();
-      this->type = new TypeInfo(BaseType::NONE);
-      return;
-    }
-    
-    this->type_ok = true;
-    this->type = new TypeInfo(sym->type);
-    this->Generate(name + "{}");
-  }
+  Expression(State* St, std::string name);
 
   /*
    * This constructor handles the case of unary operators: not and unary minus.
@@ -401,42 +253,7 @@ public:
    *
    * It then type checks the expression according to the rules below.
    */
-  Expression(Operator op, Expression* operand) {
-    switch (op) {
-        // If its a `not`, the operand must be of type `bool`,
-        // else we got ourselves a type error.
-        case Operator::NOT:
-          this->type_ok = operand->type->b_type == BaseType::BOOL;
-
-          if (this->type_ok)
-            this->type = new TypeInfo(BaseType::BOOL);
-          else
-            this->type = new TypeInfo(BaseType::NONE);
-
-          break;
-
-        // In case of an unary minus, the operand must be
-        // either one of the numeric types.
-        case Operator::NEGATE:
-          this->type_ok = operand->type->b_type == BaseType::INT
-                  or operand->type->b_type == BaseType::FLOAT;
-
-          if (this->type_ok)
-            this->type = new TypeInfo(operand->type->b_type);
-          else
-            this->type = new TypeInfo(BaseType::NONE);
-
-          break;
-
-        // Safe fallback, never really gets here.
-        default:
-            std::cerr << "[ERROR] Unsupported unary operator\n";
-            this->type_ok = false;
-            this->type = new TypeInfo(BaseType::NONE);
-    }
-
-    this->Generate(this->op_toString_Gen(op) + operand->Gen());
-  }
+  Expression(Operator op, Expression* operand);
 
   /*
    * This constructor handles the case of all the binary operators based expressions.
@@ -449,42 +266,7 @@ public:
    * Since each of these cases of expressions involves different type checking mechanisms,
    * it's good to handle them separately, keeping the code organized and decoupled.
    */
-  Expression(Expression* left, Operator op, Expression* right) {
-    switch (op) {
-      case Operator::AND:
-      case Operator::OR:
-        this->typeCheck_Logical(left->type, op, right->type);
-        break;
-      case Operator::PLUS:
-      case Operator::MINUS:
-      case Operator::DIVIDES:
-      case Operator::TIMES:
-      case Operator::POW:
-        this->typeCheck_Arithmetic(left->type, op, right->type);
-        break;
-      case Operator::LT:
-      case Operator::GT:
-      case Operator::LEQ:
-      case Operator::GEQ:
-        this->typeCheck_Relational(left->type, op, right->type);
-        break;
-      case Operator::EQ:
-      case Operator::NEQ:
-        this->typeCheck_Equality(left->type, op, right->type);
-        break;
-      default:
-        break;
-    }
-
-    switch (op) {
-      case Operator::POW:
-        this->Generate("pow(" + left->Gen() + ", " + right->Gen() + ")");
-        break;
-      default:
-        this->Generate(left->Gen() + op_toString_Gen(op) + right->Gen());
-        break;
-    }
-  }
+  Expression(Expression* left, Operator op, Expression* right);
 
 private:
   /*
@@ -545,27 +327,7 @@ private:
    * If this is not the case, a type error is reported back to the parser,
    * and the type of the expression becomes ill-formed.
    */
-  void typeCheck_Logical(TypeInfo* left, Operator op, TypeInfo* right) {
-    // The type is only correct if both operands are booleans.
-    this->type_ok = left->b_type == BaseType::BOOL 
-                  && right->b_type == BaseType::BOOL;
-
-    if (this->type_ok)
-      this->type = new TypeInfo(BaseType::BOOL);
-    else {
-      std::cerr << "[ERROR] Invalid operands to "
-                << this->op_toString(op)
-                << ": cannot apply to `"
-                << *left
-                << "` and `"
-                << *right
-                << "`. " << this->op_toString(op)
-                << " is only supported for `bool` operands.\n";
-
-      // We can't synthetize any sane type in this case.
-      this->type = new TypeInfo(BaseType::NONE);
-    }
-  }
+  void typeCheck_Logical(TypeInfo* left, Operator op, TypeInfo* right);
 
   /*
    * This method performs the type checking of arithmetic expressions.
@@ -582,51 +344,7 @@ private:
    *
    * The validity of these expressions depends if both operands are of a numeric type.
    */
-  void typeCheck_Arithmetic(TypeInfo* left, Operator op, TypeInfo* right) {
-    // Handling the pow operator, since it defaults to float, disregarding its
-    // operand's types.
-    if (op == Operator::POW) {
-      if ((left->b_type == BaseType::INT || left->b_type == BaseType::FLOAT) &&
-          (right->b_type == BaseType::INT || right->b_type == BaseType::FLOAT)) {
-          this->type_ok = true;
-          this->type = new TypeInfo(BaseType::FLOAT);
-      } else {
-          std::cerr << "[ERROR] Invalid operands to (^): cannot apply to `"
-                    << *left
-                    << "` and `"
-                    << *right
-                    << "`. (^) is only supported for `int` or `float`.\n";
-
-          this->type_ok = false;
-          this->type = new TypeInfo(BaseType::NONE);
-      }
-      return;
-    }
-
-    // Are both operands of numeric type?
-    bool left_valid  = (left->b_type == BaseType::INT || left->b_type == BaseType::FLOAT);
-    bool right_valid = (right->b_type == BaseType::INT || right->b_type == BaseType::FLOAT);
-
-    // If both are numeric, we can proceed to setting the final type.
-    if (left_valid && right_valid) {
-      BaseType result_type = (left->b_type == BaseType::FLOAT || right->b_type == BaseType::FLOAT) ? BaseType::FLOAT : BaseType::INT;
-
-      this->type_ok = true;
-      this->type = new TypeInfo(result_type);
-    } else {
-      std::cerr << "[ERROR] Invalid operands to "
-                    << this->op_toString(op)
-                    << ": cannot apply to `"
-                    << *left
-                    << "` and `"
-                    << *right
-                    << "`. " << this->op_toString(op)
-                    << " is only supported for `int` and `float`.\n";
-
-      this->type_ok = false;
-      this->type = new TypeInfo(BaseType::NONE);
-    }
-  }
+  void typeCheck_Arithmetic(TypeInfo* left, Operator op, TypeInfo* right);
 
   /*
    * This method performs the type checking of relational expressions.
@@ -640,26 +358,7 @@ private:
    *
    * A valid relational expression will be set to have type bool.
    */
-  void typeCheck_Relational(TypeInfo* left, Operator op, TypeInfo* right) {
-    if ((left->b_type == BaseType::INT or left->b_type == BaseType::FLOAT) and
-      (right->b_type == BaseType::INT or right->b_type == BaseType::FLOAT)) {
-
-      this->type_ok = true;
-      this->type = new TypeInfo(BaseType::BOOL);
-    } else {
-      std::cerr << "[ERROR] Invalid operands to "
-                << this->op_toString(op)
-                << ": cannot compare `"
-                << *left
-                << "` and `"
-                << *right
-                << "`. " << this->op_toString(op)
-                << " is only supported for `int` and `float` operands.\n";
-
-      this->type_ok = false;
-      this->type = new TypeInfo(BaseType::NONE);
-    }
-  }
+  void typeCheck_Relational(TypeInfo* left, Operator op, TypeInfo* right);
 
   /*
    * This method performs the type checking of (in)equality based expressions.
@@ -675,29 +374,7 @@ private:
    * 
    * The type of a well-formed equality expression is set to have type bool.
    */
-  void typeCheck_Equality(TypeInfo* left, Operator op, TypeInfo* right) {
-    // Numeric types are ok even if they are different.
-    if ((left->b_type == BaseType::INT or left->b_type == BaseType::FLOAT) and
-        (right->b_type == BaseType::INT or right->b_type == BaseType::FLOAT))
-      this->type_ok = true;
-    else
-      // Else we have to check if the types are equal.
-      this->type_ok = *left == *right;
-
-    if (type_ok)
-      this->type = new TypeInfo(BaseType::BOOL);
-    else {
-      std::cerr << "[ERROR] Invalid operands to "
-                << this->op_toString(op)
-                << ": cannot compare `"
-                << *left
-                << "` and `"
-                << *right
-                << "`. " << this->op_toString(op)
-                << " is only supported for operands of the same type (or numeric types).\n";
-      this->type = new TypeInfo(BaseType::NONE);
-    }
-  }
+  void typeCheck_Equality(TypeInfo* left, Operator op, TypeInfo* right);
 };
 
 /*
@@ -750,36 +427,7 @@ public:
    *
    * As always, in case of errors the type will be set to `NONE`.
    */
-  Variable(State* St, std::string name) {
-    Symbol* sym = St->Table()->lookup(name);
-
-    // Is it declared in any way?
-    if (sym == nullptr) {
-      std::cerr << "[ERROR] The name ´"
-                << name
-                << "´ isn't declared anywhere in this scope.\n";
-      this->type = new TypeInfo(BaseType::NONE);
-      this->type_ok = false;
-      St->FlagError();
-      return;
-    }
-
-    // If it's declared, is it a variable or parameter?
-    // We could have recovered a function symbol, for example.
-    if (sym->kind != SymbolKind::VARIABLE and sym->kind != SymbolKind::PARAMETER) {
-      std::cerr << "[ERROR] The name `"
-                << name
-                << "` doesn't refer to a variable or a parameter.\n";
-      this->type_ok = false;
-      St->FlagError();
-      this->type = new TypeInfo(BaseType::NONE);
-      return;
-    }
-
-    this->type_ok = true;
-    this->type = &sym->type;
-    this->Generate(name);
-  }
+  Variable(State* St, std::string name);
 
   /*
    * This constructor handles the case of accessing a field from a struct.
@@ -791,50 +439,7 @@ public:
    *
    * Lastly, we check if the field we're acessing really is a field from our struct.
    */
-  Variable(State* St, Expression* exp, std::string name) {
-    if (exp->type->b_type != BaseType::STRUCT) {
-      std::cerr << "[ERROR] Trying to use dot notation on a non-struct object.\n";
-
-      this->type_ok = false;
-      St->FlagError();
-      this->type = new TypeInfo(BaseType::NONE);
-
-      return;
-    }
-    
-    Symbol* sym = St->Table()->lookup(exp->type->struct_name);
-
-    if (sym == nullptr) {
-      std::cerr << "[ERROR] Invalid struct: ´"
-                << exp->type->struct_name
-                << "´ isn't declared as a struct anywhere in this scope.\n";
-
-      this->type_ok = false;
-      St->FlagError();
-      this->type = new TypeInfo(BaseType::NONE);
-
-      return;
-    }
-
-    for (auto field : sym->parameters) {
-      if (name == field.first) {
-        this->type_ok = true;
-        this->type = new TypeInfo(field.second);
-        this->Generate(exp->Gen() + "." + name);
-
-        return;
-      }
-    }
-
-    std::cerr << "[ERROR] Invalid access to struct field: the field `"
-              << name 
-              << "` doesn't exist in the struct `"
-              << exp->type->struct_name << "`.\n";
-
-    this->type_ok = false;
-    St->FlagError();
-    this->type = new TypeInfo(BaseType::NONE);
-  }
+  Variable(State* St, Expression* exp, std::string name);
 };
 
 /*
@@ -856,20 +461,7 @@ class Reference : public SemanticAction {
 public:
   TypeInfo* type;
 
-  Reference(State* St, Variable* var) {
-    // If anything went wrong already with the argument.
-    if (var->type->b_type == BaseType::NONE) {
-      std::cerr << "[ERROR] Cannot create reference to an invalid type.\n";
-      this->type_ok = false;
-      St->FlagError();
-      this->type = new TypeInfo(BaseType::NONE);
-      return;
-    }
-
-    this->type_ok = true;
-    this->type = new TypeInfo(BaseType::REFERENCE, *var->type);
-    this->Generate("&" + var->Gen());
-  }
+  Reference(State* St, Variable* var);
 };
 
 /*
@@ -889,33 +481,9 @@ class Dereference : public SemanticAction {
 public:
   TypeInfo* type;
 
-  Dereference(State* St, Variable* var) {
-    if (var->type->b_type != BaseType::REFERENCE) {
-      std::cerr << "[ERROR] Cannot dereference a type that isn't a reference.\n";
-      this->type_ok = false;
-      St->FlagError();
-      this->type = new TypeInfo(BaseType::NONE);
-      return;
-    }
+  Dereference(State* St, Variable* var);
 
-    this->type_ok = true;
-    this->type = type->ref_base.get();
-    this->Generate("*" + var->Gen());
-  }
-
-  Dereference(State* St, Dereference* deref) {
-    if (deref->type->b_type != BaseType::REFERENCE) {
-      std::cerr << "[ERROR] Cannot dereference a type that isn't a reference.\n";
-      this->type_ok = false;
-      St->FlagError();
-      this->type = new TypeInfo(BaseType::NONE);
-      return;
-    }
-
-    this->type_ok = true;
-    this->type = type->ref_base.get();
-    this->Generate("*" + deref->Gen());
-  }
+  Dereference(State* St, Dereference* deref);
 };
 
 // ---- Statements ----
@@ -986,34 +554,7 @@ public:
    * This is the approach chosen for this compiler, so to avoid incosistent returns in
    * nested blocks and branching.
    */
-  void add(State* St, Statement* statement) {
-    if (statement->has_return) {
-      // If this body has no return, set.
-      if (not this->has_return) {
-        this->has_return = statement->has_return;
-        this->return_type = new TypeInfo(*statement->return_type);
-      }
-
-      // If it has, compare.
-      else if (*statement->return_type != *this->return_type) {
-        if (not is_ValidCoercion(*statement->return_type, *this->return_type)) {
-          std::cerr << "[ERROR] Inconsistent return types in function `"
-                      << St->Table()->current()->name
-                      << "`. Previously got `"
-                      << *this->return_type
-                      << "`, now got `"
-                      << *statement->return_type
-                      << "`.\n";
-
-          // Keep the return type as it was.
-          this->type_ok = false;
-          St->FlagError();
-        }
-      }
-    }
-
-    statements.push_back(statement);
-  }
+  void add(State* St, Statement* statement);
 
   std::string Gen() {
     std::ostringstream gen;
@@ -1040,42 +581,7 @@ public:
    * Then, if the body has a return, we check every return type of every statement, and type checks
    * against the return type of the signature, flagging errors if the types are incompatible.
    */
-  void verify_return(State* St, ProcedureDecl* declaration) {
-    this->type_ok = true;
-
-    // If the function is non-void and the body has no returns.
-    if (declaration->return_type->b_type != BaseType::NONE and not this->has_return) {
-      std::cerr << "[ERROR] Function `"
-                << declaration->name
-                << "` is expected to return a value of type `"
-                << *declaration->return_type
-                << "` but no return statement was found.\n";
-
-      this->type_ok = false;
-      St->FlagError();
-      return;
-    }
-
-    // Checks every type of every return.
-    for (auto statement: statements)
-      if (statement->has_return) {
-        if (*statement->return_type != *declaration->return_type) {
-          if (not is_ValidCoercion(*declaration->return_type, *statement->return_type)) {
-            std::cerr << "[ERROR] Function `"
-                      << declaration->name
-                      << "` is declared to return `"
-                      << *declaration->return_type
-                      << "`, but returns `"
-                      << *statement->return_type
-                      << "`.\n";
-
-            this->type_ok = false;
-            St->FlagError();
-            continue;
-          }
-        }
-      }
-    }
+  void verify_return(State* St, ProcedureDecl* declaration);
 };
 
 /*
@@ -1097,64 +603,7 @@ public:
   /*
    * This constructor is the only one and implements the semantic actions described above.
    */
-  Call(State* St, std::string f_name, ExpressionList* exp_list) {
-    Symbol* fun = St->Table()->lookup(f_name);
-
-    // Check if the callee exists.
-    if (fun == nullptr) {
-      std::cerr << "[ERROR] Call to non-declared function `"
-                << f_name
-                << "`.\n";
-      
-      this->type_ok = false;
-      St->FlagError();
-      this->type = new TypeInfo(BaseType::NONE);
-      return;
-    }
-
-    // Check if the callee is a function.
-    if (fun->kind != SymbolKind::FUNCTION) {
-      std::cerr << "[ERROR] `"
-                << f_name
-                << "` is not a function.\n";
-
-      this->type_ok = false;
-      St->FlagError();
-      this->type = new TypeInfo(BaseType::NONE);
-    }
-
-    const auto& param_types = fun->parameters;
-    const auto& arg_exprs = exp_list->exp_list;
-
-    // Check if the actual parameters were all passed.
-    if (param_types.size() != arg_exprs.size()) {
-      std::cerr << "[ERROR] Function `" << f_name << "` expects " << param_types.size()
-                << " arguments, but got " << arg_exprs.size() << ".\n";
-      this->type_ok = false;
-      St->FlagError();
-      this->type = new TypeInfo(BaseType::NONE);
-      return;
-    }
-
-    // Checks the types of the actual parameters against the formal ones.
-    for (size_t i = 0; i < param_types.size(); ++i) {
-      if (!(*arg_exprs[i]->type == param_types[i].second)) {
-        if (not is_ValidCoercion(*arg_exprs[i]->type, param_types[i].second)) {
-          std::cerr << "[ERROR] Argument " << i + 1 << " of call to `" << f_name
-                    << "` has type `" << *arg_exprs[i]->type << "`, expected `"
-                    << param_types[i].second << "`.\n";
-          this->type_ok = false;
-          St->FlagError();
-          this->type = new TypeInfo(BaseType::NONE);
-          return;
-        }
-      }
-    }
-
-    // If we reached here, the call is valid
-    this->type_ok = true;
-    this->type = new TypeInfo(fun->type);  // Copy return type
-  }
+  Call(State* St, std::string f_name, ExpressionList* exp_list);
 };
 
 /*
@@ -1181,53 +630,13 @@ public:
    * This constructor handle the cases where the left-hand side corresponds
    * to an instance of the `var` rule.
    */
-  AssignStatement(State* St, Variable* var, Expression* exp) {
-    if (*var->type != *exp->type) {
-      if (not is_ValidCoercion(*var->type, *exp->type)) {
-        std::cerr << "[ERROR] Type error on assignment: expected `"
-                  << *var->type
-                  << "`, got `"
-                  << *exp->type
-                  << "`.\n";
-        this->type_ok = false;
-        St->FlagError();
-        return;
-      }
-    }
-
-    this->type_ok = var->Ok() and exp->Ok();
-
-    if (not this->type_ok)
-      St->FlagError();
-
-    this->Generate(var->Gen() + " = " + exp->Gen());
-  }
+  AssignStatement(State* St, Variable* var, Expression* exp);
 
   /*
    * This constructor handle the cases where the left-hand side corresponds
    * to an instance of the `deref` rule.
    */
-  AssignStatement(State* St, Dereference* deref, Expression* exp) {
-    if (*deref->type != *exp->type) {
-      if (not is_ValidCoercion(*deref->type, *exp->type)) {
-        std::cerr << "[ERROR] Type error on assignment: expected `"
-                  << *deref->type
-                  << "`, got `"
-                  << *exp->type
-                  << "`.\n";
-        this->type_ok = false;
-        St->FlagError();
-        return;
-      }
-    }
-
-    this->type_ok = deref->Ok() and exp->Ok();
-
-    if (not this->type_ok)
-      St->FlagError();
-
-    this->Generate(deref->Gen() + " = " + exp->Gen());
-  }
+  AssignStatement(State* St, Dereference* deref, Expression* exp);
 };
 
 
@@ -1244,30 +653,7 @@ public:
  */
 class ForStatement : public Statement {
 public:
-  ForStatement(State* St, std::string name, Expression* eq, Expression* to, Expression* step, StatementList* body) {
-    this->type_ok = true;
-    this->has_return = body->has_return; // If the body has return, this statement also has.
-    this->return_type = body->return_type; // The return type of this statement is the return type of its body.
-
-    Symbol* sym = St->Table()->lookup(name);
-
-    // Check if the counter variable exists.
-    if (sym == nullptr) {
-      std::cerr << "[ERROR] Name `"
-                << name
-                << "` is not declared in this scope.\n";
-    }
-
-    // Check the types of the stepping logic.
-    if (sym->type.b_type != BaseType::INT
-        or eq->type->b_type != BaseType::INT
-        or to->type->b_type != BaseType::INT
-        or step->type->b_type != BaseType::INT) {
-      std::cerr << "[ERROR] Expressions that define the loop stepping logic for must be of type `int`.\n";
-      this->type_ok = false;
-      St->FlagError();
-    }
-  }
+  ForStatement(State* St, std::string name, Expression* eq, Expression* to, Expression* step, StatementList* body);
 };
 
 /*
@@ -1282,20 +668,10 @@ public:
  */
 class WhileStatement : public Statement {
 public:
-  WhileStatement(State* St, Expression* condition, StatementList* body) {
-    this->type_ok = condition->Ok();
-    this->has_return = body->has_return;
-    this->return_type = body->return_type;
+  std::string start_label;
+  std::string end_label;
 
-    if (condition->type->b_type != BaseType::BOOL) {
-
-      std::cerr << "[ERROR] The condition that defines the while loop stop must be of type `bool`."
-                << " Received `" << *condition->type << "`.\n";
-
-      this->type_ok = false;
-      St->FlagError();
-    }
-  }
+  WhileStatement(State* St, Expression* condition, StatementList* body);
 };
 
 /*
@@ -1310,20 +686,7 @@ public:
  */
 class DoUntilStatement : public Statement {
 public:
-  DoUntilStatement(State* St, Expression* condition, StatementList* body) {
-    this->type_ok = condition->Ok();
-    this->has_return = body->has_return;
-    this->return_type = body->return_type;
-
-    if (condition->type->b_type != BaseType::BOOL) {
-
-      std::cerr << "[ERROR] The condition that defines the do-until loop stop must be of type `bool`."
-                << " Received `" << *condition->type << "`.\n";
-
-      this->type_ok = false;
-      St->FlagError();
-    }
-  }
+  DoUntilStatement(State* St, Expression* condition, StatementList* body);
 };
 
 /*
@@ -1346,67 +709,7 @@ public:
   std::string else_label;
   std::string end_label;
 
-  IfStatement(State* St, Expression* condition, StatementList* body, StatementList* else_body) {
-    this->type_ok = condition->Ok();
-    this->has_return = body->has_return;
-    this->return_type = body->return_type;
-
-    if (not this->type_ok)
-      St->FlagError();
-
-    auto if_body = *body;
-
-    if (not else_body->statements.empty()) {
-      for (auto statement : else_body->statements)
-        body->add(St, statement);
-    }
-
-    if (condition->type->b_type != BaseType::BOOL) {
-      std::cerr << "[ERROR] The condition that defines the if statement branching must be of type `bool`."
-                << " Received `" << *condition->type << "`.\n";
-
-      this->type_ok = false;
-      St->FlagError();
-    }
-
-    // Code generation
-    this->then_label = St->Next_Label();
-    this->else_label = not else_body->statements.empty() ? St->Next_Label() : "";
-    this->end_label  = St->Next_Label();
-
-    std::ostringstream gen;
-    gen << "if ("
-        << condition->Gen()
-        << ") goto "
-        << this->then_label
-        << ";\n";
-    
-    if (not else_label.empty())
-      gen << "goto "
-          << this->else_label
-          << ";\n";
-    else
-      gen << "\tgoto "
-          << this->end_label
-          << ";\n";
-
-    gen << this->then_label
-        << ":\n"
-        << if_body.Gen();
-
-    if (not else_label.empty())
-      gen << "\tgoto "
-          << this->end_label
-          << ";\n"
-          << this->else_label
-          << ":\n"
-          << else_body->Gen();
-
-    gen << this->end_label
-        << ":\n";
-
-    this->Generate(gen.str());
-  }
+  IfStatement(State* St, Expression* condition, StatementList* body, StatementList* else_body);
 };
 
 /*
@@ -1428,24 +731,12 @@ public:
    * The `type_ok` is always true in this case since there are no chance of ill-formed type
    * if there are no expressions.
    */
-  ReturnStatement() {
-    this->type_ok = true;
-    this->has_return = true;
-    this->return_type = new TypeInfo(BaseType::NONE);
-  }
+  ReturnStatement();
   
   /*
    * This constructor handles the case of returns with expressions.
    *
    * In this case we check if the expression is well-typed.
    */
-  ReturnStatement(State* St, Expression* exp) {
-    this->type_ok = exp->Ok();
-
-    if (not this->type_ok)
-      St->FlagError();
-
-    this->has_return = true;
-    this->return_type = new TypeInfo(*exp->type);
-  }
+  ReturnStatement(State* St, Expression* exp);
 };

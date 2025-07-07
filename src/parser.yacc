@@ -271,7 +271,10 @@ else_opt:
     ;
 
 while_stmt:
-    While exp Do stmt_list Od { $$ = new WhileStatement(&St, $2, $4); }
+    While exp Do stmt_list Od {
+        $$ = new WhileStatement(&St, $2, $4);
+        St.Emit($$->Gen());
+      }
     ;
 
 for_stmt:
