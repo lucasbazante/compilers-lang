@@ -81,13 +81,21 @@ public:
   }
 
   void Emit_While_Header(const std::string& condition, const std::string& end_label) {
-    if (not error) {
+    if (not error)
       output << "if (!"
         << condition
         << ") goto "
         << end_label
+        << ";\n"; 
+  }
+  
+  void Emit_DoUntil_Header(const std::string& condition, const std::string& loop_label) {
+    if (not error)
+      output << "if ("
+        << condition
+        << ") goto "
+        << loop_label
         << ";\n";
-    }
   }
 
   /*
@@ -99,18 +107,6 @@ public:
   void Emit_Expr(const std::string& code, TypeInfo* type) {
     if (not error)
       output << Next_TempVar(type) << " = " << code << ";\n";
-  }
-  
-  /*
-   * Emit an expression partially and assign it to a intermediary variable.
-   *
-   * The meaning of `partially` here is just that there is no code associated
-   * yet to generate. This happens when the code must be emmited by another source,
-   * like from a variable.
-   */
-  void Emit_Partial_Expr(TypeInfo* type) {
-    if (not error)
-      output << Next_TempVar(type) << " = ";
   }
 
   /*

@@ -738,7 +738,15 @@ public:
  */
 class ForStatement : public Statement {
 public:
-    ForStatement(State* St, std::string name, Expression* eq, Expression* to, Expression* step, StatementList* body);
+    Variable* var;
+    Expression* eq;
+    Expression* to;
+    Expression* step;
+    StatementList* body;
+
+    ForStatement(State* St, Variable* var, Expression* eq, Expression* to, Expression* step, StatementList* body);
+
+    void Generate(State *St);
 };
 
 /*
@@ -773,7 +781,12 @@ public:
  */
 class DoUntilStatement : public Statement {
 public:
+    Expression* condition;
+    StatementList* body;
+
     DoUntilStatement(State* St, Expression* condition, StatementList* body);
+
+    void Generate(State* St);
 };
 
 /*

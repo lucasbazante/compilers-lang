@@ -17,13 +17,8 @@ begin
 		// i := ex.x + 55 * 3;
 		// r_i := ref(i);
 
-		if i > 5 && i >= 7 then
-			while i < 15 do
-				i := i + 1;
-				j := j - 1
-			od
-		else
-			i := 7
-		fi
+		for i := 0 to 10 step 2 do
+			j := j - 1
+		od
 	end
 end

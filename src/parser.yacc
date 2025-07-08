@@ -271,7 +271,7 @@ while_stmt:
     ;
 
 for_stmt:
-    For Identifier Eq exp To exp Step exp Do stmt_list Od { $$ = new ForStatement(&St, *$2, $4, $6, $8, $10); }
+    For var Assign exp To exp Step exp Do stmt_list Od { $$ = new ForStatement(&St, $2, $4, $6, $8, $10); }
     ;
 
 do_until_stmt:

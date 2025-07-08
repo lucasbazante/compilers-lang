@@ -56,36 +56,11 @@ WhileStatement::WhileStatement(State* St, Expression* condition, StatementList* 
     }
 }
 
-// ---- For Loop ----
-
-ForStatement::ForStatement(State* St, std::string name, Expression* eq, Expression* to, Expression* step, StatementList* body) {
-    this->type_ok = true;
-    this->has_return = body->has_return; // If the body has return, this statement also has.
-    this->return_type = body->return_type; // The return type of this statement is the return type of its body.
-
-    Symbol* sym = St->Table()->lookup(name);
-
-    // Check if the counter variable exists.
-    if (sym == nullptr) {
-        std::cerr << "[ERROR] Name `"
-            << name
-            << "` is not declared in this scope.\n";
-    }
-
-    // Check the types of the stepping logic.
-    if (sym->type.b_type != BaseType::INT
-        or eq->type->b_type != BaseType::INT
-        or to->type->b_type != BaseType::INT
-        or step->type->b_type != BaseType::INT) {
-        std::cerr << "[ERROR] Expressions that define the loop stepping logic for must be of type `int`.\n";
-        this->type_ok = false;
-        St->FlagError();
-    }
-}
-
 // ---- Do-Until Loop ----
 
-DoUntilStatement::DoUntilStatement(State* St, Expression* condition, StatementList* body) {
+DoUntilStatement::DoUntilStatement(State* St, Expression* condition, StatementList* body)
+: condition(condition), body(body)
+{
     this->type_ok = condition->Ok();
     this->has_return = body->has_return;
     this->return_type = body->return_type;
@@ -95,6 +70,27 @@ DoUntilStatement::DoUntilStatement(State* St, Expression* condition, StatementLi
         std::cerr << "[ERROR] The condition that defines the do-until loop stop must be of type `bool`."
             << " Received `" << *condition->type << "`.\n";
 
+        this->type_ok = false;
+        St->FlagError();
+    }
+}
+
+// ---- For Loop ----
+
+ForStatement::ForStatement(State* St, Variable* var, Expression* eq, Expression* to, Expression* step, StatementList* body)
+: var(var), eq(eq), to(to), step(step), body(body)
+{
+    this->type_ok = true;
+    this->has_return = body->has_return; // If the body has return, this statement also has.
+    this->return_type = body->return_type; // The return type of this statement is the return type of its body.
+
+    // Check the types of the stepping logic.
+    if (var->type->b_type != BaseType::INT
+        or eq->type->b_type != BaseType::INT
+        or to->type->b_type != BaseType::INT
+        or step->type->b_type != BaseType::INT)
+    {
+        std::cerr << "[ERROR] Expressions that define the loop stepping logic for must be of type `int`.\n";
         this->type_ok = false;
         St->FlagError();
     }
