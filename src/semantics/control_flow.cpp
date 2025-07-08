@@ -39,7 +39,9 @@ IfStatement::IfStatement(State* St, Expression* condition, StatementList* body, 
 
 // ---- While Loop ----
 
-WhileStatement::WhileStatement(State* St, Expression* condition, StatementList* body) {
+WhileStatement::WhileStatement(State* St, Expression* condition, StatementList* body)
+: condition(condition), body(body)
+{
     this->type_ok = condition->Ok();
     this->has_return = body->has_return;
     this->return_type = body->return_type;
@@ -52,13 +54,6 @@ WhileStatement::WhileStatement(State* St, Expression* condition, StatementList* 
         this->type_ok = false;
         St->FlagError();
     }
-
-    this->start_label = St->Next_Label();
-    this->end_label   = St->Next_Label();
-
-    std::ostringstream gen;
-    gen << this->start_label
-        << ":\n";
 }
 
 // ---- For Loop ----

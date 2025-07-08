@@ -18,7 +18,10 @@ begin
 		// r_i := ref(i);
 
 		if i > 5 && i >= 7 then
-			i := 6
+			while i < 15 do
+				i := i + 1;
+				j := j - 1
+			od
 		else
 			i := 7
 		fi

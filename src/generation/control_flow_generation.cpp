@@ -4,7 +4,6 @@
 */
 
 #include "semantics.hpp"
-#include <iterator>
 
 void IfStatement::Generate(State* St) {
     std::string then_label = St->Next_Label(),
@@ -32,6 +31,27 @@ void IfStatement::Generate(State* St) {
         St->Emit_Label(else_label);
         this->else_body->Generate(St);
     }
+
+    St->Emit_Label(end_label);
+}
+
+void WhileStatement::Generate(State* St) {
+    std::string start_label = St->Next_Label(),
+                end_label   = St->Next_Label();
+
+    St->Emit_Label(start_label);
+
+    this->condition->Generate(St);
+
+    St->Emit_While_Header(this->condition->Repr(), end_label);
+
+    this->body->Generate(St);
+
+    St->Emit(
+        "goto "     +
+        start_label +
+        ";"
+    );
 
     St->Emit_Label(end_label);
 }

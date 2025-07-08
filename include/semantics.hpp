@@ -753,10 +753,12 @@ public:
  */
 class WhileStatement : public Statement {
 public:
-    std::string start_label;
-    std::string end_label;
+    Expression* condition;
+    StatementList* body;
 
     WhileStatement(State* St, Expression* condition, StatementList* body);
+
+    void Generate(State* St);
 };
 
 /*

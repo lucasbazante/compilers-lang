@@ -80,6 +80,16 @@ public:
     }
   }
 
+  void Emit_While_Header(const std::string& condition, const std::string& end_label) {
+    if (not error) {
+      output << "if (!"
+        << condition
+        << ") goto "
+        << end_label
+        << ";\n";
+    }
+  }
+
   /*
    * Emit an expression and assign it to a intermediary variable.
    *
