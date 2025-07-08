@@ -41,6 +41,10 @@ void StatementList::add(State* St, Statement* statement) {
     statements.push_back(statement);
 }
 
+void StatementList::pop_added(int n) {
+    statements.resize(statements.size() - n);
+}
+
 void StatementList::verify_return(State* St, ProcedureDecl* declaration) {
     this->type_ok = true;
 

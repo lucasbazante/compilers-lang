@@ -1,0 +1,24 @@
+/**
+ * This file contains the definitions for the code generation method
+ * for variable accessing and struct field accessing.
+*/
+
+#include "semantics.hpp"
+
+void Variable::Generate(State* St) {
+    if (this->struct_exp == nullptr)
+        St->Emit_OnLine(this->name);
+    else {
+        this->struct_exp->Generate(St);
+        St->Emit_OnLine(this->struct_exp->Repr() + "." + this->name);
+    }
+}
+
+void Variable::Internal_Generation(State* St) {
+    if (this->struct_exp == nullptr)
+        this->Set_Repr(this->name);
+    else {
+        this->struct_exp->Generate(St);
+        this->Set_Repr(this->struct_exp->Repr() + "." + this->name);
+    }
+}

@@ -5,23 +5,37 @@
 
 #include "semantics.hpp"
 
-Expression::Expression(BaseType t)
-: type(new TypeInfo(t))
-{}
-
-Expression::Expression(TypeInfo* type, bool ok, const std::string& gen)
+Expression::Expression(TypeInfo* type, const std::string& gen)
 : type(type)
 {
-    this->type_ok = ok;
-    this->Generate(gen);
+    this->type_ok = true;
+    this->Set_Repr(gen);
 }
 
-Expression::Expression(State* St, std::string name) {
-    Symbol* sym = St->Table()->lookup(name);
+Expression::Expression(Variable* var)
+: type(var->type), var(var)
+{
+    this->type_ok = var->Ok();
+}
+
+Expression::Expression(Reference* ref)
+: type(ref->type), ref(ref)
+{
+    this->type_ok = ref->Ok();
+}
+
+Expression::Expression(Dereference* deref)
+: type(deref->type), deref(deref)
+{
+    this->type_ok = ref->Ok();
+}
+
+Expression::Expression(State* St, std::string struct_name) {
+    Symbol* sym = St->Table()->lookup(struct_name);
 
     if (sym == nullptr) {
         std::cerr << "[ERROR] Invalid struct instantiation: `"
-            << name
+            << struct_name
             << "` is not a declared struct in this scope.\n";
 
         this->type_ok = false;
@@ -32,10 +46,14 @@ Expression::Expression(State* St, std::string name) {
 
     this->type_ok = true;
     this->type = new TypeInfo(sym->type);
-    this->Generate(name + "{}");
+
+    St->Emit_Expr(struct_name + "{}", this->type);
+    this->Set_Repr(St->Current_TempVar());
 }
 
-Expression::Expression(Operator op, Expression* operand) {
+Expression::Expression(Operator op, Expression* operand)
+: lhs(operand), rhs(nullptr), op(op)
+{
     switch (op) {
         // If its a `not`, the operand must be of type `bool`,
         // else we got ourselves a type error.
@@ -68,11 +86,11 @@ Expression::Expression(Operator op, Expression* operand) {
             this->type_ok = false;
             this->type = new TypeInfo(BaseType::NONE);
     }
-
-    this->Generate(this->op_toString_Gen(op) + operand->Gen());
 }
 
-Expression::Expression(Expression* left, Operator op, Expression* right) {
+Expression::Expression(Expression* left, Operator op, Expression* right)
+: lhs(left), rhs(right), op(op)
+{
     switch (op) {
         case Operator::AND:
         case Operator::OR:
@@ -96,15 +114,6 @@ Expression::Expression(Expression* left, Operator op, Expression* right) {
             this->typeCheck_Equality(left->type, op, right->type);
             break;
         default:
-            break;
-    }
-
-    switch (op) {
-        case Operator::POW:
-            this->Generate("pow(" + left->Gen() + ", " + right->Gen() + ")");
-            break;
-        default:
-            this->Generate(left->Gen() + op_toString_Gen(op) + right->Gen());
             break;
     }
 }

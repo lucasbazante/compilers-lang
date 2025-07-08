@@ -7,7 +7,9 @@
 
 // ---- If Statement ----
 
-IfStatement::IfStatement(State* St, Expression* condition, StatementList* body, StatementList* else_body) {
+IfStatement::IfStatement(State* St, Expression* condition, StatementList* body, StatementList* else_body)
+: condition(condition), then_body(body), else_body(else_body)
+{
     this->type_ok = condition->Ok();
     this->has_return = body->has_return;
     this->return_type = body->return_type;
@@ -15,12 +17,16 @@ IfStatement::IfStatement(State* St, Expression* condition, StatementList* body, 
     if (not this->type_ok)
         St->FlagError();
 
-    auto if_body = *body;
-
+    // Adding the `else` statements to the body,
+    // so that they'll trigger potential mismatch return type errors.
     if (not else_body->statements.empty()) {
-        for (auto statement : else_body->statements)
-        body->add(St, statement);
+        for (auto statement : else_body->statements) {
+            then_body->add(St, statement);
+        }
+
+        then_body->pop_added(else_body->statements.size());
     }
+
 
     if (condition->type->b_type != BaseType::BOOL) {
         std::cerr << "[ERROR] The condition that defines the if statement branching must be of type `bool`."
@@ -29,44 +35,6 @@ IfStatement::IfStatement(State* St, Expression* condition, StatementList* body, 
         this->type_ok = false;
         St->FlagError();
     }
-
-    // Code generation
-    this->then_label = St->Next_Label();
-    this->else_label = not else_body->statements.empty() ? St->Next_Label() : "";
-    this->end_label  = St->Next_Label();
-
-    std::ostringstream gen;
-    gen << "if ("
-        << condition->Gen()
-        << ") goto "
-        << this->then_label
-        << ";\n";
-
-    if (not else_label.empty())
-        gen << "goto "
-            << this->else_label
-            << ";\n";
-    else
-        gen << "\tgoto "
-            << this->end_label
-            << ";\n";
-
-    gen << this->then_label
-        << ":\n"
-        << if_body.Gen();
-
-    if (not else_label.empty())
-        gen << "\tgoto "
-            << this->end_label
-            << ";\n"
-            << this->else_label
-            << ":\n"
-            << else_body->Gen();
-
-    gen << this->end_label
-        << ":\n";
-
-    this->Generate(gen.str());
 }
 
 // ---- While Loop ----

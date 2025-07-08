@@ -126,21 +126,16 @@ decl:
 
 var_decl:
     Var Identifier Colon type {
-        $$ = new VarDecl(&St, *$2, *$4);
-
-        St.Emit_Decl($$->Gen(), "", $4);
+        $$ = new VarDecl(&St, *$2, $4);
+        $$->Generate(&St);
       }
     | Var Identifier Colon type Assign exp {
-        auto actual_type = *$6->type;
-        $$ = new VarDecl(&St, *$2, *$4, actual_type);
-
-        St.Emit_Decl($$->Gen(), $6->Gen(), $4);
+        $$ = new VarDecl(&St, *$2, $4, $6);
+        $$->Generate(&St);
       }
     | Var Identifier Assign exp {
-        auto exp_type = *$4->type;
-        $$ = new VarDecl(&St, *$2, exp_type);
-
-        St.Emit_Decl($$->Gen(), $4->Gen());
+        $$ = new VarDecl(&St, *$2, $4);
+        $$->Generate(&St);
       }
     ;
 
@@ -148,6 +143,7 @@ proc_decl:
     proc_decl_signature Begin proc_body End {
         $3->verify_return(&St, $1);
         St.Table()->pop();
+        $3->Generate(&St);
       }
     ;
 
@@ -178,8 +174,7 @@ decl_block:
 rec_decl:
     Struct Identifier L_Bracket paramfield_decl_list_opt R_Bracket {
         $$ = new StructDecl(&St, *$2, $4);
-
-        St.Emit_StructDecl(*$2, $4->Gen());
+        $$->Generate(&St);
     }
     ;
 
@@ -261,7 +256,6 @@ assign_stmt:
 if_stmt:
     If exp Then stmt_list else_opt Fi {
         $$ = new IfStatement(&St, $2, $4, $5);
-        St.Emit($$->Gen());
       }
     ;
 
@@ -273,7 +267,6 @@ else_opt:
 while_stmt:
     While exp Do stmt_list Od {
         $$ = new WhileStatement(&St, $2, $4);
-        St.Emit($$->Gen());
       }
     ;
 
@@ -317,137 +310,89 @@ exp:
           auto lhs = $1;
           auto rhs = $3;
           $$ = new Expression(lhs, Expression::Operator::AND, rhs);
-
-          St.Emit_Expr($$->Gen(), $$->type);
-          $$->Generate(St.Current_TempVar());
       }
     | exp Or exp {
           auto lhs = $1;
           auto rhs = $3;
           $$ = new Expression(lhs, Expression::Operator::OR, rhs);
-
-          St.Emit_Expr($$->Gen(), $$->type);
-          $$->Generate(St.Current_TempVar());
       }
     | Not exp {
           auto expr = $2;
           $$ = new Expression(Expression::Operator::NOT, expr);
-
-          St.Emit_Expr($$->Gen(), $$->type);
-          $$->Generate(St.Current_TempVar());
       }
     | exp Lt exp {
           auto lhs = $1;
           auto rhs = $3;
           $$ = new Expression(lhs, Expression::Operator::LT, rhs);
-
-          St.Emit_Expr($$->Gen(), $$->type);
-          $$->Generate(St.Current_TempVar());
       }
     | exp Gt exp {
           auto lhs = $1;
           auto rhs = $3;
           $$ = new Expression(lhs, Expression::Operator::GT, rhs);
-
-          St.Emit_Expr($$->Gen(), $$->type);
-          $$->Generate(St.Current_TempVar());
       }
     | exp Leq exp {
           auto lhs = $1;
           auto rhs = $3;
           $$ = new Expression(lhs, Expression::Operator::LEQ, rhs);
-
-          St.Emit_Expr($$->Gen(), $$->type);
-          $$->Generate(St.Current_TempVar());
       }
     | exp Geq exp {
           auto lhs = $1;
           auto rhs = $3;
           $$ = new Expression(lhs, Expression::Operator::GEQ, rhs);
-
-          St.Emit_Expr($$->Gen(), $$->type);
-          $$->Generate(St.Current_TempVar());
       }
     | exp Eq exp {
           auto lhs = $1;
           auto rhs = $3;
           $$ = new Expression(lhs, Expression::Operator::EQ, rhs);
-
-          St.Emit_Expr($$->Gen(), $$->type);
-          $$->Generate(St.Current_TempVar());
       }
     | exp Neq exp {
           auto lhs = $1;
           auto rhs = $3;
           $$ = new Expression(lhs, Expression::Operator::NEQ, rhs);
-
-          St.Emit_Expr($$->Gen(), $$->type);
-          $$->Generate(St.Current_TempVar());
       }
     | Minus exp %prec UMINUS {
         auto expr = $2;
         $$ = new Expression(Expression::Operator::NEGATE, expr);
-
-        St.Emit_Expr($$->Gen(), $$->type);
-        $$->Generate(St.Current_TempVar());
       }
     | exp Plus exp {
           auto lhs = $1;
           auto rhs = $3;
           $$ = new Expression(lhs, Expression::Operator::PLUS, rhs);
-
-          St.Emit_Expr($$->Gen(), $$->type);
-          $$->Generate(St.Current_TempVar());
       }
     | exp Minus exp {
           auto lhs = $1;
           auto rhs = $3;
           $$ = new Expression(lhs, Expression::Operator::MINUS, rhs);
-
-          St.Emit_Expr($$->Gen(), $$->type);
-          $$->Generate(St.Current_TempVar());
       }
     | exp Divides exp {
           auto lhs = $1;
           auto rhs = $3;
           $$ = new Expression(lhs, Expression::Operator::DIVIDES, rhs);
-
-          St.Emit_Expr($$->Gen(), $$->type);
-          $$->Generate(St.Current_TempVar());
       }
     | exp Times exp {
           auto lhs = $1;
           auto rhs = $3;
           $$ = new Expression(lhs, Expression::Operator::TIMES, rhs);
-
-          St.Emit_Expr($$->Gen(), $$->type);
-          $$->Generate(St.Current_TempVar());
       }
     | exp Pow exp {
           auto lhs = $1;
           auto rhs = $3;
           $$ = new Expression(lhs, Expression::Operator::POW, rhs);
-
-          St.Emit_Expr($$->Gen(), $$->type);
-          $$->Generate(St.Current_TempVar());
       } 
     | call_stmt {
         auto call = $1;
-        $$ = new Expression(call->type, call->Ok(), "call");
+        $$ = new Expression(call->type, "call");
       }
     | var {
-        auto v = $1;
-        $$ = new Expression(v->type, v->Ok(), v->Gen());
+        $$ = new Expression($1);
       }
     | ref_var {
-        auto ref = $1;
-        $$ = new Expression(ref->type, ref->Ok(), ref->Gen());
+        $$ = new Expression($1);
       }
     | deref_var {
-        auto deref = $1;
-        $$ = new Expression(deref->type, deref->Ok(), deref->Gen());
+        $$ = new Expression($1);
       }
-    | literal             { $$ = new Expression($1, true, yytext); }
+    | literal             { $$ = new Expression($1, yytext); }
     | New Identifier      { $$ = new Expression(&St, *$2); }
     | L_Paren exp R_Paren { $$ = $2; }
     ;

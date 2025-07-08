@@ -6,7 +6,9 @@
 
 #include "semantics.hpp"
 
-AssignStatement::AssignStatement(State* St, Variable* var, Expression* exp) {
+AssignStatement::AssignStatement(State* St, Variable* var, Expression* exp)
+: var(var), deref(nullptr), exp(exp)
+{
     if (*var->type != *exp->type) {
         if (not is_ValidCoercion(*var->type, *exp->type)) {
             std::cerr << "[ERROR] Type error on assignment: expected `"
@@ -24,11 +26,11 @@ AssignStatement::AssignStatement(State* St, Variable* var, Expression* exp) {
 
     if (not this->type_ok)
         St->FlagError();
-
-    this->Generate(var->Gen() + " = " + exp->Gen());
 }
 
-AssignStatement::AssignStatement(State* St, Dereference* deref, Expression* exp) {
+AssignStatement::AssignStatement(State* St, Dereference* deref, Expression* exp)
+: var(nullptr), deref(deref), exp(exp)
+{
     if (*deref->type != *exp->type) {
         if (not is_ValidCoercion(*deref->type, *exp->type)) {
             std::cerr << "[ERROR] Type error on assignment: expected `"
@@ -46,6 +48,4 @@ AssignStatement::AssignStatement(State* St, Dereference* deref, Expression* exp)
 
     if (not this->type_ok)
         St->FlagError();
-
-    this->Generate(deref->Gen() + " = " + exp->Gen());
 }

@@ -5,7 +5,9 @@
 
 #include "semantics.hpp"
 
-Variable::Variable(State* St, std::string name) {
+Variable::Variable(State* St, std::string name)
+: name(name), struct_exp(nullptr)
+{
     Symbol* sym = St->Table()->lookup(name);
 
     // Is it declared in any way?
@@ -33,10 +35,11 @@ Variable::Variable(State* St, std::string name) {
 
     this->type_ok = true;
     this->type = &sym->type;
-    this->Generate(name);
 }
 
-Variable::Variable(State* St, Expression* exp, std::string name) {
+Variable::Variable(State* St, Expression* exp, std::string name)
+: name(name), struct_exp(exp)
+{
     if (exp->type->b_type != BaseType::STRUCT) {
         std::cerr << "[ERROR] Trying to use dot notation on a non-struct object.\n";
 
@@ -65,8 +68,6 @@ Variable::Variable(State* St, Expression* exp, std::string name) {
         if (name == field.first) {
             this->type_ok = true;
             this->type = new TypeInfo(field.second);
-            this->Generate(exp->Gen() + "." + name);
-
             return;
         }
     }

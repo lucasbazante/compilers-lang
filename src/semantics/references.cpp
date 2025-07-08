@@ -7,7 +7,9 @@
 
 // ---- References ----
 
-Reference::Reference(State* St, Variable* var) {
+Reference::Reference(State* St, Variable* var)
+: var(var)
+{
     // If anything went wrong already with the argument.
     if (var->type->b_type == BaseType::NONE) {
         std::cerr << "[ERROR] Cannot create reference to an invalid type.\n";
@@ -19,12 +21,13 @@ Reference::Reference(State* St, Variable* var) {
 
     this->type_ok = true;
     this->type = new TypeInfo(BaseType::REFERENCE, *var->type);
-    this->Generate("&" + var->Gen());
 }
 
 // ---- Dereference ----
 
-Dereference::Dereference(State* St, Variable* var) {
+Dereference::Dereference(State* St, Variable* var)
+: var(var), deref(nullptr)
+{
     if (var->type->b_type != BaseType::REFERENCE) {
         std::cerr << "[ERROR] Cannot dereference a type that isn't a reference.\n";
         this->type_ok = false;
@@ -35,10 +38,12 @@ Dereference::Dereference(State* St, Variable* var) {
 
     this->type_ok = true;
     this->type = type->ref_base.get();
-    this->Generate("*" + var->Gen());
+    // this->Generate("*" + var->Gen());
 }
 
-Dereference::Dereference(State* St, Dereference* deref) {
+Dereference::Dereference(State* St, Dereference* deref)
+: var(nullptr), deref(deref)
+{
     if (deref->type->b_type != BaseType::REFERENCE) {
         std::cerr << "[ERROR] Cannot dereference a type that isn't a reference.\n";
         this->type_ok = false;
@@ -49,5 +54,5 @@ Dereference::Dereference(State* St, Dereference* deref) {
 
     this->type_ok = true;
     this->type = type->ref_base.get();
-    this->Generate("*" + deref->Gen());
+    // this->Generate("*" + deref->Gen());
 }

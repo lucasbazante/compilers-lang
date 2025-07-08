@@ -1,17 +1,17 @@
 program example
 begin
 	var i : int;
-	// var j : int := i * 6;
+	var j := 5.5;
 	// var k : int := j * 7;
 	// var x := i;
-	// var r_i : ref(int);
+	// var r_i : ref(int) := ref(x);
 
 	// struct Exemplo {
 	// 	x : int
 	// };
-
-	// var ex := new Exemplo;
-
+	//
+	// var ex := new Exemplo . x + 5 + -7
+	
 	procedure main()
 	begin
 		// i := ex.x + 55 * 3;

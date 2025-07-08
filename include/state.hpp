@@ -51,23 +51,79 @@ public:
       output << code << "\n";
   }
 
+  void Emit_OnLine(const std::string& code) {
+    if (not error)
+      output << code;
+  }
+
+  void Emit_Label(const std::string& label) {
+    if (not error)
+      output << label << ":\n";
+  }
+
+  void Emit_If_Header(const std::string& condition, const std::string& then_label, const std::string& end_label, const std::string& else_label = "") {
+    if (not error) {
+      output << "if ("
+        << condition
+        << ") goto "
+        << then_label
+        << ";\n";
+
+      if (not else_label.empty())
+        output << "goto "
+          << else_label
+          << ";\n";
+      else
+        output << "goto "
+          << end_label
+          << ";\n";
+    }
+  }
+
+  /*
+   * Emit an expression and assign it to a intermediary variable.
+   *
+   * Each expression contains at most one operator, so the result
+   * of the operator is assign to the variable here.
+   */
   void Emit_Expr(const std::string& code, TypeInfo* type) {
     if (not error)
       output << Next_TempVar(type) << " = " << code << ";\n";
   }
+  
+  /*
+   * Emit an expression partially and assign it to a intermediary variable.
+   *
+   * The meaning of `partially` here is just that there is no code associated
+   * yet to generate. This happens when the code must be emmited by another source,
+   * like from a variable.
+   */
+  void Emit_Partial_Expr(TypeInfo* type) {
+    if (not error)
+      output << Next_TempVar(type) << " = ";
+  }
 
-  void Emit_Decl(const std::string& decl_name, const std::string& expr = "", TypeInfo* type = nullptr) {
-    if (not error) {
-      if (type != nullptr)
-        output << type->Gen() << " ";
+  /*
+   * Emit a declaration without expression assigned to it.
+   * Example: `int x;`.
+  */
+  void Emit_Decl(const std::string& decl_name, TypeInfo* type) {
+    if (not error)
+      output << type->Gen() << " "
+        << decl_name
+        << ";\n";
+  }
 
-      output << decl_name;
-
-      if (not expr.empty())
-        output << " = " << expr;
-
-      output << ";\n";
-    }
+  /*
+   * Emit a declaration with an expression assigned to it.
+   * Example: `int x = 5;`.
+  */
+  void Emit_Decl(const std::string& decl_name, TypeInfo* type, const std::string& expr_repr) {
+    if (not error)
+      output << type->Gen() << " "
+        << decl_name
+        << " = " << expr_repr
+        << ";\n";
   }
 
   void Emit_StructDecl(const std::string& struct_name, const std::string& params) {
