@@ -11,7 +11,9 @@ private:
   bool error;
   int temp_var_counter;
   int label_counter;
+  std::ostringstream code;
   std::ostringstream output;
+  std::ostringstream declarations;
 
 public:
   State()
@@ -30,12 +32,47 @@ public:
     error = true;
   }
 
+  void Emit_Code() {
+    declarations << "\n" << output.str();
+    code << declarations.str() << "\n";
+
+    output.str("");
+    declarations.str("");
+  }
+
+  std::string Output() {
+    return code.str();
+  }
+  
+  void Emit(const std::string& code) {
+    if (not error)
+      output << code << "\n";
+  }
+
+  void Emit_OnLine(const std::string& code) {
+    if (not error)
+      output << code;
+  }
+
   std::string Next_TempVar(TypeInfo* type) {
     return type->Gen() + " _v" + std::to_string(temp_var_counter++);
   }
 
   std::string Current_TempVar() {
     return "_v" + std::to_string(temp_var_counter - 1);
+  }
+  
+  /*
+   * Emit an expression and assign it to a intermediary variable.
+   *
+   * Each expression contains at most one operator, so the result
+   * of the operator is assign to the variable here.
+   */
+  void Emit_Expr(const std::string& code, TypeInfo* type) {
+    if (not error) {
+      declarations << Next_TempVar(type) << ";\n";
+      output << Current_TempVar() << " = " << code << ";\n";
+    }
   }
 
   std::string Next_Label() {
@@ -46,14 +83,32 @@ public:
     return "L" + std::to_string(label_counter - 1);
   }
 
-  void Emit(const std::string& code) {
+  /*
+   * Emit a declaration without expression assigned to it.
+   * Example: `int x;`.
+  */
+  void Emit_Decl(const std::string& decl_name, TypeInfo* type) {
     if (not error)
-      output << code << "\n";
+      declarations << type->Gen() << " "
+        << decl_name
+        << ";\n";
   }
 
-  void Emit_OnLine(const std::string& code) {
+  /*
+   * Emit a declaration with an expression assigned to it.
+   * Example: `int x = 5;`.
+  */
+  void Emit_Decl(const std::string& decl_name, TypeInfo* type, const std::string& expr_repr) {
     if (not error)
-      output << code;
+      declarations << type->Gen() << " "
+        << decl_name
+        << " = " << expr_repr
+        << ";\n";
+  }
+
+  void Emit_StructDecl(const std::string& struct_name, const std::string& params) {
+    if (not error)
+      declarations << "struct " << struct_name << " {\n" << params << "};\n";
   }
 
   void Emit_Label(const std::string& label) {
@@ -96,48 +151,5 @@ public:
         << ") goto "
         << loop_label
         << ";\n";
-  }
-
-  /*
-   * Emit an expression and assign it to a intermediary variable.
-   *
-   * Each expression contains at most one operator, so the result
-   * of the operator is assign to the variable here.
-   */
-  void Emit_Expr(const std::string& code, TypeInfo* type) {
-    if (not error)
-      output << Next_TempVar(type) << " = " << code << ";\n";
-  }
-
-  /*
-   * Emit a declaration without expression assigned to it.
-   * Example: `int x;`.
-  */
-  void Emit_Decl(const std::string& decl_name, TypeInfo* type) {
-    if (not error)
-      output << type->Gen() << " "
-        << decl_name
-        << ";\n";
-  }
-
-  /*
-   * Emit a declaration with an expression assigned to it.
-   * Example: `int x = 5;`.
-  */
-  void Emit_Decl(const std::string& decl_name, TypeInfo* type, const std::string& expr_repr) {
-    if (not error)
-      output << type->Gen() << " "
-        << decl_name
-        << " = " << expr_repr
-        << ";\n";
-  }
-
-  void Emit_StructDecl(const std::string& struct_name, const std::string& params) {
-    if (not error)
-      output << "struct " << struct_name << " {\n" << params << "};\n";
-  }
-
-  std::string Output() {
-    return output.str();
   }
 };

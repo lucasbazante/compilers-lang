@@ -144,6 +144,7 @@ proc_decl:
         $3->verify_return(&St, $1);
         St.Table()->pop();
         $3->Generate(&St);
+        St.Emit_Code();
       }
     ;
 
