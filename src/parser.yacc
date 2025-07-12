@@ -381,8 +381,7 @@ exp:
           $$ = new Expression(lhs, Expression::Operator::POW, rhs);
       } 
     | call_stmt {
-        auto call = $1;
-        $$ = new Expression(call->type, "call");
+        $$ = new Expression($1);
       }
     | var {
         $$ = new Expression($1);

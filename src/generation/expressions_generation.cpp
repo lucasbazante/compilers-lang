@@ -20,6 +20,8 @@ void Expression::GenerateOperand(State* St) {
         this->ref->Internal_Generation(St), this->Set_Repr(this->ref->Repr());
     else if (deref != nullptr)
         this->deref->Internal_Generation(St), this->Set_Repr(this->deref->Repr());
+    else if (call != nullptr)
+        this->call->Internal_Generation(St), this->Set_Repr(this->call->Repr());
 
     // St->Emit_Expr(this->Repr(), this->type);
     // this->Set_Repr(St->Current_TempVar());

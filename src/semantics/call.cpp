@@ -5,7 +5,9 @@
 
 #include "semantics.hpp"
 
-Call::Call(State* St, std::string f_name, ExpressionList* exp_list) {
+Call::Call(State* St, std::string f_name, ExpressionList* exp_list)
+: f_name(f_name), exp_list(exp_list)
+{
     Symbol* fun = St->Table()->lookup(f_name);
 
     // Check if the callee exists.

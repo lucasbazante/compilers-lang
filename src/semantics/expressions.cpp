@@ -30,6 +30,12 @@ Expression::Expression(Dereference* deref)
     this->type_ok = ref->Ok();
 }
 
+Expression::Expression(Call* call)
+: type(call->type), call(call)
+{
+    this->type_ok = call->Ok();
+}
+
 Expression::Expression(State* St, std::string struct_name) {
     Symbol* sym = St->Table()->lookup(struct_name);
 

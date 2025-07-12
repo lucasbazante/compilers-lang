@@ -11,14 +11,104 @@ private:
   bool error;
   int temp_var_counter;
   int label_counter;
+  std::ostringstream header;
   std::ostringstream code;
   std::ostringstream output;
   std::ostringstream declarations;
 
+  void Generate_Std_Impl() {
+    this->Generate_readint();
+    this->Generate_readfloat();
+    this->Generate_readchar();
+    this->Generate_readstring();
+    this->Generate_readline();
+
+    this->Generate_printint();
+    this->Generate_printfloat();
+    this->Generate_printstr();
+    this->Generate_printline();
+  }
+
+  void Generate_readint() {
+    header << "int readint() {\n"
+      << "    int x;\n"
+      << "    cin >> x;\n"
+      << "    return x;\n"
+      << "}\n";
+  }
+
+  void Generate_readfloat() {
+    header << "float readfloat() {\n"
+      << "    float x;\n"
+      << "    cin >> x;\n"
+      << "    return x;\n"
+      << "}\n\n";
+  }
+
+  void Generate_readchar() {
+    header << "int readchar() {\n"
+      << "    int c = cin.get();\n"
+      << "    return c;\n"
+      << "}\n\n";
+  }
+
+  void Generate_readstring() {
+    header << "string readstring() {\n"
+      << "    string s;\n"
+      << "    cin >> s;\n"
+      << "    return s;\n"
+      << "}\n\n";
+  }
+
+  void Generate_readline() {
+    header << "string readline() {\n"
+      << "    string line;\n"
+      << "    getline(cin, line);\n"
+      << "    return line;\n"
+      << "}\n\n";
+  }
+
+  void Generate_printint() {
+    header << "void printint(int i) {\n"
+      << "    cout << i;\n"
+      << "}\n\n";
+  }
+
+  void Generate_printfloat() {
+    header << "void printfloat(float f) {\n"
+      << "    cout << f;\n"
+      << "}\n\n";
+  }
+
+  void Generate_printstr() {
+    header << "void printstr(const std::string& s) {\n"
+      << "    cout << s;\n"
+      << "}\n\n";
+  }
+
+  void Generate_printline() {
+    header << "void printline(const std::string& s) {\n"
+      << "    cout << s << endl;\n"
+      << "}\n\n";
+  }
+
+  void Generate_Imports() {
+    header << "#include <iostream>\n"
+      << "#include <string>\n"
+      << "using namespace std;\n\n";
+  }
+
+  void Generate_Main() {
+    header << "int main() {\n\n";
+  }
 public:
   State()
-    : sym_tab(SymbolTable()), error(false), temp_var_counter(0)
-  { }
+  : sym_tab(SymbolTable()), error(false), temp_var_counter(0)
+  {
+    this->Generate_Imports();
+    this->Generate_Std_Impl();
+    this->Generate_Main();
+  }
 
   ~State() {
     sym_tab.pop();
@@ -31,6 +121,13 @@ public:
   void FlagError() {
     error = true;
   }
+  
+  std::string Output() {
+    header << code.str();
+    header << "\n\n"
+      << "return 0;\n}\n";
+    return header.str();
+  }
 
   void Emit_Code() {
     declarations << "\n" << output.str();
@@ -40,10 +137,6 @@ public:
     declarations.str("");
   }
 
-  std::string Output() {
-    return code.str();
-  }
-  
   void Emit(const std::string& code) {
     if (not error)
       output << code << "\n";
@@ -61,7 +154,7 @@ public:
   std::string Current_TempVar() {
     return "_v" + std::to_string(temp_var_counter - 1);
   }
-  
+
   /*
    * Emit an expression and assign it to a intermediary variable.
    *
@@ -143,7 +236,7 @@ public:
         << end_label
         << ";\n"; 
   }
-  
+
   void Emit_DoUntil_Header(const std::string& condition, const std::string& loop_label) {
     if (not error)
       output << "if ("

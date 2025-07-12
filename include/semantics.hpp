@@ -63,6 +63,7 @@ class Expression;
 class Variable;
 class Reference;
 class Dereference;
+class Call;
 
 // ---- DECLARATIONS ----
 
@@ -261,6 +262,7 @@ public:
     Variable* var;
     Reference* ref;
     Dereference* deref;
+    Call* call;
     Operator op;
 
     /*
@@ -286,6 +288,15 @@ public:
     Expression(Reference* ref);
 
     Expression(Dereference* deref);
+
+    /*
+     * This constructor handles the case of the expression being a call to
+     * a function.
+     *
+     * The type checking is already done by the call class rules, so
+     * we will just store it.
+     */
+    Expression(Call* call);
 
     /*
    * This constructor handles the case of instantiating a struct with the `new name` pattern.
@@ -678,11 +689,19 @@ public:
 class Call : public Statement {
 public:
     TypeInfo* type;
+    std::string f_name;
+    ExpressionList* exp_list;
 
     /*
    * This constructor is the only one and implements the semantic actions described above.
    */
     Call(State* St, std::string f_name, ExpressionList* exp_list);
+
+    void Generate(State* St);
+    void Generate_Std(State* St);
+
+    void Internal_Generation(State* St);
+    void Internal_Std_Generation(State* St);
 };
 
 /*
