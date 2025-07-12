@@ -254,9 +254,93 @@ class SymbolTable {
 private:
 	std::vector<std::unique_ptr<Scope>> scopes;
 
+	void std_lib() {
+		this->readint();
+		this->readfloat();
+		this->readchar();
+		this->readstring();
+		this->readline();
+
+		this->printint();
+		this->printfloat();
+		this->printstr();
+		this->printline();
+	}
+
+	void readint() {
+		TypeInfo type(BaseType::INT);
+		Symbol sym("readint", SymbolKind::FUNCTION, type);
+		this->insert(sym);
+	}
+
+	void readfloat() {
+		TypeInfo type(BaseType::FLOAT);
+		Symbol sym("readfloat", SymbolKind::FUNCTION, type);
+		this->insert(sym);
+	}
+
+	void readchar() {
+		TypeInfo type(BaseType::INT);
+		Symbol sym( "readchar", SymbolKind::FUNCTION, type);
+		this->insert(sym);
+	}
+
+	void readstring() {
+		TypeInfo type(BaseType::STRING);
+		Symbol sym("readstring", SymbolKind::FUNCTION, type);
+		this->insert(sym);
+	}
+
+	void readline() {
+		TypeInfo type(BaseType::STRING);
+		Symbol sym("readline", SymbolKind::FUNCTION, type);
+		this->insert(sym);
+	}
+
+	void printint() {
+		TypeInfo type(BaseType::NONE),
+			 param_type(BaseType::INT);
+
+		Symbol sym("printint", SymbolKind::FUNCTION, type);
+		sym.parameters.push_back({"i", param_type});
+
+		this->insert(sym);
+	}
+
+	void printfloat() {
+		TypeInfo type(BaseType::NONE),
+			 param_type(BaseType::FLOAT);
+
+		Symbol sym("printfloat", SymbolKind::FUNCTION, type);
+		sym.parameters.push_back({"f", param_type});
+
+		this->insert(sym);
+	}
+
+	void printstr() {
+		TypeInfo type(BaseType::NONE),
+			 param_type(BaseType::STRING);
+
+		Symbol sym("printstr", SymbolKind::FUNCTION, type);
+		sym.parameters.push_back({"s", param_type});
+
+		this->insert(sym);
+	}
+
+	void printline() {
+		TypeInfo type(BaseType::NONE),
+			 param_type(BaseType::STRING);
+
+		Symbol sym("printline", SymbolKind::FUNCTION, type);
+		sym.parameters.push_back({"s", param_type});
+
+		this->insert(sym);
+	}
+
 public:
 	SymbolTable() {
 		push("program");
+		this->std_lib();
 	}
 
 	/*
