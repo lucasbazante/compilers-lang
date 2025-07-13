@@ -260,6 +260,7 @@ public:
     Expression* lhs;
     Expression* rhs;
     Variable* var;
+    std::string struct_name;
     Reference* ref;
     Dereference* deref;
     Call* call;

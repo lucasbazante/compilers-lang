@@ -36,7 +36,9 @@ Expression::Expression(Call* call)
     this->type_ok = call->Ok();
 }
 
-Expression::Expression(State* St, std::string struct_name) {
+Expression::Expression(State* St, std::string struct_name)
+: struct_name(struct_name)
+{
     Symbol* sym = St->Table()->lookup(struct_name);
 
     if (sym == nullptr) {
@@ -53,8 +55,8 @@ Expression::Expression(State* St, std::string struct_name) {
     this->type_ok = true;
     this->type = new TypeInfo(sym->type);
 
-    St->Emit_Expr(struct_name + "{}", this->type);
-    this->Set_Repr(St->Current_TempVar());
+    // St->Emit_Expr(struct_name + "{}", this->type);
+    // this->Set_Repr(St->Current_TempVar());
 }
 
 Expression::Expression(Operator op, Expression* operand)

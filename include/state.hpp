@@ -12,9 +12,8 @@ private:
   int temp_var_counter;
   int label_counter;
   std::ostringstream header;
-  std::ostringstream code;
-  std::ostringstream output;
   std::ostringstream declarations;
+  std::ostringstream program;
 
   void Generate_Std_Impl() {
     this->Generate_readint();
@@ -101,6 +100,7 @@ private:
   void Generate_Main() {
     header << "int main() {\n\n";
   }
+
 public:
   State()
   : sym_tab(SymbolTable()), error(false), temp_var_counter(0)
@@ -121,34 +121,52 @@ public:
   void FlagError() {
     error = true;
   }
-  
-  std::string Output() {
-    header << code.str();
-    header << "\n\n"
-      << "return 0;\n}\n";
-    return header.str();
+
+  std::string Scoped_Name(const std::string& name) {
+    auto scope = this->sym_tab.current()->name;
+    return "_" + scope + "_" + name;
   }
 
-  void Emit_Code() {
-    declarations << "\n" << output.str();
-    code << declarations.str() << "\n";
-
-    output.str("");
-    declarations.str("");
+  std::string Scoped_Type(TypeInfo* type) {
+    if (type->b_type == BaseType::STRUCT) {
+      auto scope = this->sym_tab.current()->name;
+      return "_" + scope + "_" + type->Gen();
+    }
+    return type->Gen();
+  }
+  
+  std::string Output() {
+    header << declarations.str() << "\n";
+    header << program.str();
+    header << "\n"
+      << "return 0;\n}\0";
+    return header.str();
   }
 
   void Emit(const std::string& code) {
     if (not error)
-      output << code << "\n";
+      program << code << "\n";
   }
 
   void Emit_OnLine(const std::string& code) {
     if (not error)
-      output << code;
+      program << code;
+  }
+
+  void Emit_Var(const std::string& name) {
+    if (not error)
+      program << this->Scoped_Name(name);
+  }
+
+  void Emit_Access(const std::string& name, const std::string& struct_exp) {
+    if (not error)
+      program << struct_exp
+        << "."
+        << name;
   }
 
   std::string Next_TempVar(TypeInfo* type) {
-    return type->Gen() + " _v" + std::to_string(temp_var_counter++);
+    return this->Scoped_Type(type) + " _v" + std::to_string(temp_var_counter++);
   }
 
   std::string Current_TempVar() {
@@ -164,7 +182,7 @@ public:
   void Emit_Expr(const std::string& code, TypeInfo* type) {
     if (not error) {
       declarations << Next_TempVar(type) << ";\n";
-      output << Current_TempVar() << " = " << code << ";\n";
+      program << Current_TempVar() << " = " << code << ";\n";
     }
   }
 
@@ -181,10 +199,12 @@ public:
    * Example: `int x;`.
   */
   void Emit_Decl(const std::string& decl_name, TypeInfo* type) {
-    if (not error)
-      declarations << type->Gen() << " "
-        << decl_name
+    if (not error) {
+      declarations << this->Scoped_Type(type)
+        << " "
+        << this->Scoped_Name(decl_name)
         << ";\n";
+    }
   }
 
   /*
@@ -192,37 +212,44 @@ public:
    * Example: `int x = 5;`.
   */
   void Emit_Decl(const std::string& decl_name, TypeInfo* type, const std::string& expr_repr) {
-    if (not error)
-      declarations << type->Gen() << " "
-        << decl_name
-        << " = " << expr_repr
+    if (not error) {
+      this->Emit_Decl(decl_name, type);
+
+      program << this->Scoped_Name(decl_name)
+        << " = "
+        << expr_repr
         << ";\n";
+    }
   }
 
   void Emit_StructDecl(const std::string& struct_name, const std::string& params) {
     if (not error)
-      declarations << "struct " << struct_name << " {\n" << params << "};\n";
+      declarations << "struct "
+        << this->Scoped_Name(struct_name)
+        << " {\n"
+        << params
+        << "};\n";
   }
 
   void Emit_Label(const std::string& label) {
     if (not error)
-      output << label << ":\n";
+      program << label << ":\n";
   }
 
   void Emit_If_Header(const std::string& condition, const std::string& then_label, const std::string& end_label, const std::string& else_label = "") {
     if (not error) {
-      output << "if ("
+      program << "if ("
         << condition
         << ") goto "
         << then_label
         << ";\n";
 
       if (not else_label.empty())
-        output << "goto "
+        program << "goto "
           << else_label
           << ";\n";
       else
-        output << "goto "
+        program << "goto "
           << end_label
           << ";\n";
     }
@@ -230,7 +257,7 @@ public:
 
   void Emit_While_Header(const std::string& condition, const std::string& end_label) {
     if (not error)
-      output << "if (!"
+      program << "if (!"
         << condition
         << ") goto "
         << end_label
@@ -239,7 +266,7 @@ public:
 
   void Emit_DoUntil_Header(const std::string& condition, const std::string& loop_label) {
     if (not error)
-      output << "if ("
+      program << "if ("
         << condition
         << ") goto "
         << loop_label

@@ -142,9 +142,9 @@ var_decl:
 proc_decl:
     proc_decl_signature Begin proc_body End {
         $3->verify_return(&St, $1);
-        St.Table()->pop();
         $3->Generate(&St);
-        St.Emit_Code();
+        St.Table()->pop();
+        // St.Emit_Code();
       }
     ;
 

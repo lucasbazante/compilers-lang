@@ -1,14 +1,14 @@
 program example
 begin
-	// var i : int;
-	// var j := 5.5;
+	var i : int;
+	var j := 5.5 + 1;
 	//
 	//
-	// struct Exemplo {
-	// 	x : int
-	// };
-	//
-	// var ex := new Exemplo . x + 5 + -7
+	struct Exemplo {
+		x : int
+	};
+
+	var ex := new Exemplo . x + 5 + -7;
 	
 	// procedure test()
 	// begin
@@ -19,18 +19,19 @@ begin
 
 	procedure main()
 	begin
-		var i : int;
-		var r_i : ref(int);
-		var j : int
+		var i : int
+		// var r_i : ref(int);
+		// var j : int
 	in
 		// i := ex.x + 55 * 3;
 		// r_i := ref(i);
 
 		i := readint();
-		printint(i);
 
-		for i := 0 to 10 step 2 do
-			j := j - 1
-		od
+		printint(i)
+
+		// for i := 0 to 10 step 2 do
+		// 	j := j - 1
+		// od
 	end
 end
