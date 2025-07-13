@@ -23,3 +23,10 @@ void StructDecl::Generate(State* St) {
 
     St->Emit_StructDecl(this->name, fields.str());
 }
+
+void ProcedureDecl::Generate(State* St) {
+    std::ostringstream proc_label;
+    proc_label << "LABEL_" << this->name;
+    St->Emit_Label(proc_label.str());
+}
+

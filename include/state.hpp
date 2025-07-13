@@ -28,6 +28,30 @@ private:
     this->Generate_printline();
   }
 
+  void Generate_Stack() {
+    header << "typedef std::variant<\n"
+     << " std::monostate, // nothing\n"
+     << " int,      // integers\n"
+     << " float,        // floats\n"
+     << " std::string,  // strings and identifiers\n"
+     << " bool      // booleans\n"
+     << "> Value;\n\n"
+     << "struct Struct {\n"
+     << "   std::vector<Variable> vars;\n"
+     << "};\n\n"
+     << "struct Variable {\n"
+     << "   std::string name;\n"
+     << "   Value value;\n"
+     << "   Struct struct_value;\n"
+     << "   std::shared_ptr<Variable> ref_value;\n"
+     << "};\n\n"
+     << "struct ActivationRecord {\n"
+     << "   std::vector<Variable> vars;\n"
+     << "   void* return_label;\n"
+     << "};\n\n"
+     << "std::vector<ActivationRecord> stack;\n";
+  }
+
   void Generate_readint() {
     header << "int readint() {\n"
       << "    int x;\n"
@@ -94,6 +118,9 @@ private:
   void Generate_Imports() {
     header << "#include <iostream>\n"
       << "#include <string>\n"
+      << "#include <variant>\n"
+      << "#include <vector>\n"
+      << "#include <memory>\n"
       << "using namespace std;\n\n";
   }
 
@@ -107,6 +134,7 @@ public:
   {
     this->Generate_Imports();
     this->Generate_Std_Impl();
+    this->Generate_Stack();
     this->Generate_Main();
   }
 
@@ -137,6 +165,7 @@ public:
   
   std::string Output() {
     header << declarations.str() << "\n";
+    header << "goto LABEL_main;" << "\n";
     header << program.str();
     header << "\n"
       << "return 0;\n}\0";
@@ -271,5 +300,15 @@ public:
         << ") goto "
         << loop_label
         << ";\n";
+  }
+
+  std::string Get_Stack_Push() {
+    std::ostringstream stack_push;
+    stack_push << "stack.push_back()";
+    return stack_push.str();
+  }
+
+  std::string Get_Stack_Pop() {
+
   }
 };

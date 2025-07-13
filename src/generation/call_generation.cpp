@@ -24,7 +24,12 @@ void Call::Generate(State* St) {
     if (std::find(std_.begin(), std_.end(), this->f_name) != std_.end())
         this->Generate_Std(St);
     else {
-        St->Emit("// CALL_STATEMENT_PLACEHOLDER");
+        St->Emit(
+            St->Get_Stack_Push() + "\n" +
+            "goto LABEL_" + f_name + ";\n" +
+            "LABEL_return_" + f_name + ":\n"
+        );
+        this->Set_Repr(St->Get_Stack_Pop());
     }
 }
 
@@ -49,4 +54,8 @@ void Call::Internal_Generation(State* St) {
 
 void Call::Internal_Std_Generation(State* St) {
     this->Set_Repr( this->f_name + "()");
+}
+
+void ReturnStatement::Generate(State* St) {
+    // return proc_end_label
 }

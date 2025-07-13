@@ -151,6 +151,7 @@ proc_decl:
 proc_decl_signature:
     Procedure Identifier L_Paren paramfield_list_opt R_Paren return_type_opt {
         $$ = new ProcedureDecl(&St, *$2, $4, $6);
+        $$->Generate(&St);
         St.Table()->push(*$2);
         $$->declare_params_in_scope(&St, $4);
       }

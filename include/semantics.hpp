@@ -216,6 +216,8 @@ public:
    * and this method is called in sequence.
    */
     void declare_params_in_scope(State* St, ParameterField* params);
+
+    void Generate(State* St);
 };
 
 // ---- Expressions ----
@@ -861,4 +863,6 @@ public:
    * In this case we check if the expression is well-typed.
    */
     ReturnStatement(State* St, Expression* exp);
+
+    void Generate(State* St);
 };
