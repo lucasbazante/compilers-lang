@@ -163,7 +163,7 @@ proc_decl_signature:
 
 proc_body:
     decl_block_opt stmt_list {
-        $$ = new ProcedureBody($2);
+        $$ = $2;
       }
     ;
 
