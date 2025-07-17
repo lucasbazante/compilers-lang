@@ -9,3 +9,11 @@ void StatementList::Generate(State* St) {
     for (auto statement : statements)
         statement->Generate(St);
 }
+
+void ReturnStatement::Generate(State* St) {
+    if (exp != nullptr) {
+        this->exp->Generate(St);
+        St->Emit_Return_Value(this->exp->Repr());
+    }
+    St->Emit_Return();
+}

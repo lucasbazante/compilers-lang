@@ -90,7 +90,9 @@ ReturnStatement::ReturnStatement() {
     this->return_type = new TypeInfo(BaseType::NONE);
 }
 
-ReturnStatement::ReturnStatement(State* St, Expression* exp) {
+ReturnStatement::ReturnStatement(State* St, Expression* exp)
+: exp(exp)
+{
     this->type_ok = exp->Ok();
 
     if (not this->type_ok)

@@ -24,7 +24,14 @@ void Call::Generate(State* St) {
     if (std::find(std_.begin(), std_.end(), this->f_name) != std_.end())
         this->Generate_Std(St);
     else {
-        St->Emit("// CALL_STATEMENT_PLACEHOLDER");
+        if (exp_list != nullptr) {
+            for (auto exp : exp_list->exp_list)
+                exp->Generate(St), this->exp_list_repr.push_back(exp->Repr());
+
+            St->Emit_Call_Params(this->f_name, this->f_symbol, this->exp_list_repr);
+        }
+
+        St->Emit_Call(this->f_name);
     }
 }
 
@@ -45,6 +52,10 @@ void Call::Generate_Std(State* St) {
 void Call::Internal_Generation(State* St) {
     if (std::find(std_.begin(), std_.end(), this->f_name) != std_.end())
         this->Internal_Std_Generation(St);
+    else {
+        this->Generate(St);
+        this->Set_Repr("_" + this->f_name + "_return");
+    }
 }
 
 void Call::Internal_Std_Generation(State* St) {

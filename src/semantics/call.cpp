@@ -22,6 +22,8 @@ Call::Call(State* St, std::string f_name, ExpressionList* exp_list)
         return;
     }
 
+    this->f_symbol = fun;
+
     // Check if the callee is a function.
     if (fun->kind != SymbolKind::FUNCTION) {
         std::cerr << "[ERROR] `"

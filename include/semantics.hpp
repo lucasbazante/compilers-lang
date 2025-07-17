@@ -141,16 +141,6 @@ public:
     ~ParameterField() {
         for (auto f : fields) delete f;
     }
-
-    std::string Gen() {
-        std::ostringstream gen;
-
-        for (auto f : fields) {
-            gen << "\t" << f->type->Gen() << " " << f->name << ";\n";
-        }
-
-        return gen.str();
-    }
 };
 
 /*
@@ -196,6 +186,7 @@ class ProcedureDecl : public SemanticAction {
 public:
     std::string name;
     TypeInfo* return_type;
+    ParameterField* params;
 
     /*
    * The only constructor, receiving a pointer to the symbol table, the procedure name, its parameters,
@@ -215,7 +206,9 @@ public:
    * The action of pushing a new scope into the table is done in the yacc parser,
    * and this method is called in sequence.
    */
-    void declare_params_in_scope(State* St, ParameterField* params);
+    void declare_params_in_scope(State* St);
+
+    void Generate(State* St);
 };
 
 // ---- Expressions ----
@@ -691,7 +684,9 @@ class Call : public Statement {
 public:
     TypeInfo* type;
     std::string f_name;
+    Symbol* f_symbol;
     ExpressionList* exp_list;
+    std::vector<std::string> exp_list_repr;
 
     /*
    * This constructor is the only one and implements the semantic actions described above.
@@ -847,6 +842,8 @@ public:
  */
 class ReturnStatement : public Statement {
 public:
+    Expression* exp;
+
     /*
    * This constructor handles the case of early returns, without expressions.
    *
@@ -861,4 +858,6 @@ public:
    * In this case we check if the expression is well-typed.
    */
     ReturnStatement(State* St, Expression* exp);
+
+    void Generate(State* St);
 };

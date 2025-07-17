@@ -135,7 +135,9 @@ StructDecl::StructDecl(State* St, std::string name, ParameterField* paramfield)
 
 // ---- Procedure Declaration ----
 
-ProcedureDecl::ProcedureDecl(State* St, std::string name, ParameterField* params, TypeInfo* return_type) {
+ProcedureDecl::ProcedureDecl(State* St, std::string name, ParameterField* params, TypeInfo* return_type)
+: name(name), params(params)
+{
     this->type_ok = true;
 
     Symbol sym(name, SymbolKind::FUNCTION, *return_type);
@@ -157,8 +159,8 @@ ProcedureDecl::ProcedureDecl(State* St, std::string name, ParameterField* params
     this->return_type = new TypeInfo(*return_type);
 }
 
-void ProcedureDecl::declare_params_in_scope(State* St, ParameterField* params) {
-    for (auto param : params->fields) {
+void ProcedureDecl::declare_params_in_scope(State* St) {
+    for (auto param : this->params->fields) {
         Symbol sym(param->name, SymbolKind::PARAMETER, *param->type);
 
         // If we can't insert the symbol, it means there are two

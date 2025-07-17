@@ -1,9 +1,0 @@
-// Expressões que envolvem float são do tipo float
-program example
-begin
-	procedure main ()
-	begin
-		var a : int := 1 + 1.0
-	in
-	end
-end

@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "symbol_table.hpp"
 
@@ -94,7 +95,13 @@ private:
   void Generate_Imports() {
     header << "#include <iostream>\n"
       << "#include <string>\n"
+      << "#include <vector>\n"
+      << "#include <cmath>\n"
       << "using namespace std;\n\n";
+  }
+
+  void Generate_Label_Stack() {
+    header << "vector<void*> label_stack;\n\n";
   }
 
   void Generate_Main() {
@@ -106,6 +113,7 @@ public:
   : sym_tab(SymbolTable()), error(false), temp_var_counter(0)
   {
     this->Generate_Imports();
+    this->Generate_Label_Stack();
     this->Generate_Std_Impl();
     this->Generate_Main();
   }
@@ -123,22 +131,29 @@ public:
   }
 
   std::string Scoped_Name(const std::string& name) {
-    auto scope = this->sym_tab.current()->name;
+    auto scope = this->sym_tab.scope_name(name);
     return "_" + scope + "_" + name;
+  }
+
+  std::string Return_Name() {
+    auto scope = this->sym_tab.current()->name;
+    return "_" + scope + "_return";
   }
 
   std::string Scoped_Type(TypeInfo* type) {
     if (type->b_type == BaseType::STRUCT) {
-      auto scope = this->sym_tab.current()->name;
+      auto scope = this->sym_tab.scope_name(type->struct_name);
       return "_" + scope + "_" + type->Gen();
+    } else if (type->b_type == BaseType::REFERENCE) {
+      return this->Scoped_Type(type->ref_base.get()) + "*";
     }
     return type->Gen();
   }
   
   std::string Output() {
-    header << declarations.str() << "\n";
-    header << program.str();
-    header << "\n"
+    header << declarations.str();
+    header << "\ngoto main;\n\n";
+    header << program.str()
       << "return 0;\n}\0";
     return header.str();
   }
@@ -146,6 +161,10 @@ public:
   void Emit(const std::string& code) {
     if (not error)
       program << code << "\n";
+  }
+
+  void Break_Line() {
+    program << "\n";
   }
 
   void Emit_OnLine(const std::string& code) {
@@ -160,7 +179,9 @@ public:
 
   void Emit_Access(const std::string& name, const std::string& struct_exp) {
     if (not error)
-      program << struct_exp
+      program << "("
+        << struct_exp
+        << ")"
         << "."
         << name;
   }
@@ -194,6 +215,11 @@ public:
     return "L" + std::to_string(label_counter - 1);
   }
 
+  void Emit_Proc_Label(const std::string& name) {
+    program << name
+      << ":\n";
+  }
+
   /*
    * Emit a declaration without expression assigned to it.
    * Example: `int x;`.
@@ -204,6 +230,78 @@ public:
         << " "
         << this->Scoped_Name(decl_name)
         << ";\n";
+    }
+  }
+
+  void Emit_Param(const std::string& name, TypeInfo* type) {
+    if (not error)
+      declarations << this->Scoped_Type(type)
+        << " "
+        << this->Scoped_Name(name)
+        << ";\n";
+  }
+
+  void Emit_Return_Var(const std::string& f_name, TypeInfo* return_type) {
+    if (not error)
+      declarations << this->Scoped_Type(return_type)
+        << " _"
+        << f_name
+        << "_return"
+        << ";\n";
+  }
+
+  void Emit_Return_Value(const std::string& exp_repr) {
+    if (not error)
+      program << this->Return_Name()
+        << " = "
+        << exp_repr
+        << ";\n"; 
+  }
+
+  void Emit_Return() {
+    if (not error)
+      program << "goto *label_stack.back();\n";
+  }
+
+  /*
+   * In case a void procedure has no return, we must still return it from calls.
+   */
+  void Emit_Safe_Return(TypeInfo* type, bool has_return, const std::string& name) {
+    if (not error)
+      if (type->b_type == BaseType::NONE and not has_return and name != "main") {
+        this->Emit_Return();
+      }
+  }
+
+  void Emit_Call_Params(const std::string& f_name, const Symbol* f_symbol, const std::vector<std::string>& params) {
+    if (not error)
+      for (int i{}; i < params.size(); ++i)
+        program << "_"
+          << f_name
+          << "_"
+          << f_symbol->parameters[i].first
+          << " = "
+          << params[i]
+          << ";\n";
+  }
+
+  void Emit_Call(const std::string& f_name) {
+    if (not error) {
+      // Generate a new label
+      this->Next_Label();
+
+      program << "label_stack.push_back(&&"
+        << this->Current_Label()
+        << ");\n";
+
+      program << "goto "
+        << f_name
+        << ";\n";
+
+      program << this->Current_Label()
+        << ":\n";
+
+      program << "label_stack.pop_back();\n";
     }
   }
 

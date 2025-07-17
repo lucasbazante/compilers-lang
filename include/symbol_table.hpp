@@ -85,7 +85,12 @@ struct TypeInfo {
 	*/
 	TypeInfo(BaseType b_type)
 		: b_type(b_type)
-	{}
+	{
+		if (b_type == BaseType::REFERENCE) {
+			auto t = new TypeInfo(BaseType::NONE);
+			ref_base = std::make_shared<TypeInfo>(*t);
+		}
+	}
 
 	/*
 	 * Constructor for representing structs.
@@ -157,6 +162,8 @@ inline bool operator==(const TypeInfo& lhs, const TypeInfo& rhs) {
 
     // If reference, compare the base types recursively
     if (lhs.b_type == BaseType::REFERENCE) {
+	if (*lhs.ref_base == BaseType::NONE or *rhs.ref_base == BaseType::NONE)
+		return true;
         if (!lhs.ref_base || !rhs.ref_base)
             return false; // mismatched presence of base
 
@@ -240,6 +247,25 @@ public:
 		}
 
 		return nullptr;
+	}
+
+	/*
+	 * Look up for the first scope in which a name is declared.
+	 */
+	std::string lookup_scope_name(const std::string& name) {
+		Scope* current = this;
+
+		while (current) {
+			auto it = current->table.find(name);
+
+			if (it != current->table.end())
+				return current->name;
+			
+			// Move up the scope to the enclosing
+			current = current->parent;
+		}
+
+		return "";
 	}
 };
 
@@ -380,5 +406,13 @@ public:
 	*/
 	Symbol* lookup(const std::string& name) {
 		return current()->lookup(name);
+	}
+
+	/*
+	 * Looks up a symbol name and return the first scope in whic
+	 * its declared.
+	*/
+	std::string scope_name(const std::string& name) {
+		return current()->lookup_scope_name(name);	
 	}
 };
