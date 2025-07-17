@@ -16,8 +16,11 @@ If you want to run/inspect the descendent syntactic analysis, please refer to th
 To run the Bison parser, assuming that `file` is a sample code of the parsed language, simply do:
 
 ```sh
-./build/parser < file
+./build/parser < file > output_file_name.cpp
 ```
+
+The output file needs to be in C++ because the internal mechanisms of the code (such as I/O) are implemented in C++.
+After this, just compile the file with `g++` and run it as a normal program.
 
 ## Examples
 Some examples of programs can be found in `examples` folder.
