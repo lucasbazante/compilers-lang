@@ -24,9 +24,6 @@ void Expression::GenerateOperand(State* St) {
         this->call->Internal_Generation(St), this->Set_Repr(this->call->Repr());
     else if (not struct_name.empty())
         St->Emit_Expr(St->Scoped_Name(struct_name) + "{}", this->type), this-> Set_Repr(St->Current_TempVar());
-
-    // St->Emit_Expr(this->Repr(), this->type);
-    // this->Set_Repr(St->Current_TempVar());
 }
 
 void Expression::GenerateUnary(State* St) {

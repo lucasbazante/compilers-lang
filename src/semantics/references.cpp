@@ -37,8 +37,7 @@ Dereference::Dereference(State* St, Variable* var)
     }
 
     this->type_ok = true;
-    this->type = type->ref_base.get();
-    // this->Generate("*" + var->Gen());
+    this->type = var->type->ref_base.get();
 }
 
 Dereference::Dereference(State* St, Dereference* deref)
@@ -53,6 +52,5 @@ Dereference::Dereference(State* St, Dereference* deref)
     }
 
     this->type_ok = true;
-    this->type = type->ref_base.get();
-    // this->Generate("*" + deref->Gen());
+    this->type = deref->type->ref_base.get();
 }

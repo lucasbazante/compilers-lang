@@ -18,8 +18,16 @@ void StructDecl::Generate(State* St) {
     std::ostringstream fields;
 
     for (auto field : this->paramfield->fields) {
-        fields << "\t" << field->type->Gen() << " " << field->name << ";\n";
+        fields << "\t" << St->Scoped_Type(field->type) << " " << field->name << ";\n";
     }
 
     St->Emit_StructDecl(this->name, fields.str());
+}
+
+void ProcedureDecl::Generate(State* St) {
+    for (auto f : this->params->fields)
+        St->Emit_Param(f->name, f->type);
+
+    if (this->return_type->b_type != BaseType::NONE)
+        St->Emit_Return_Var(this->name, this->return_type);
 }

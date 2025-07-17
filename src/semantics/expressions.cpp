@@ -9,7 +9,10 @@ Expression::Expression(TypeInfo* type, const std::string& gen)
 : type(type)
 {
     this->type_ok = true;
-    this->Set_Repr(gen);
+    if (gen == "null")
+        this->Set_Repr("nullptr");
+    else
+        this->Set_Repr(gen);
 }
 
 Expression::Expression(Variable* var)
@@ -27,7 +30,7 @@ Expression::Expression(Reference* ref)
 Expression::Expression(Dereference* deref)
 : type(deref->type), deref(deref)
 {
-    this->type_ok = ref->Ok();
+    this->type_ok = deref->Ok();
 }
 
 Expression::Expression(Call* call)
@@ -54,9 +57,6 @@ Expression::Expression(State* St, std::string struct_name)
 
     this->type_ok = true;
     this->type = new TypeInfo(sym->type);
-
-    // St->Emit_Expr(struct_name + "{}", this->type);
-    // this->Set_Repr(St->Current_TempVar());
 }
 
 Expression::Expression(Operator op, Expression* operand)

@@ -142,9 +142,14 @@ var_decl:
 proc_decl:
     proc_decl_signature Begin proc_body End {
         $3->verify_return(&St, $1);
+
+        St.Emit_Proc_Label($1->name);
+        $1->Generate(&St);
         $3->Generate(&St);
+        St.Emit_Safe_Return($1->return_type, $3->has_return, $1->name);
+        St.Break_Line();
+
         St.Table()->pop();
-        // St.Emit_Code();
       }
     ;
 
@@ -152,13 +157,13 @@ proc_decl_signature:
     Procedure Identifier L_Paren paramfield_list_opt R_Paren return_type_opt {
         $$ = new ProcedureDecl(&St, *$2, $4, $6);
         St.Table()->push(*$2);
-        $$->declare_params_in_scope(&St, $4);
+        $$->declare_params_in_scope(&St);
       }
     ;
 
 proc_body:
     decl_block_opt stmt_list {
-        $$ = $2;
+        $$ = new ProcedureBody($2);
       }
     ;
 
